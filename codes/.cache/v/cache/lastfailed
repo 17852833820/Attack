@@ -1,0 +1,4 @@
+{
+  "train_modles_offline_fcnn.py": true,
+  "train_modles_offline_fcnn.py::test_models": true
+}
