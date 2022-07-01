@@ -18,8 +18,9 @@ class DNN_offine_conv_white():
         self.Num_epochs = 500  # number of training epochs
         self.network = ConvCNN40.ConvCNN40()
         self.network = self.network.double()
-        #self.network = torch.load('../offline/conv_white/ConvCNN_white.pth')#DNNA pre-trained
-        self.writer= SummaryWriter('./logs/trainDNN/CNN/white/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
+        self.network = torch.load('../online/conv_white/ConvCNN_white150.pth')#DNNA pre-trained
+        #self.writer= SummaryWriter('./logs/trainDNN/CNN/white/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
+        self.writer= SummaryWriter('./logs/trainDNN/CNN/white/2022-07-01-16-38-07/tensorboard2')
         self.path_train = '../datas/Online_A_up_SIMO.csv'
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # fix random seeds
