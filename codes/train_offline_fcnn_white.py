@@ -21,7 +21,7 @@ class DNN_offine_fcnn_white():
         self.network = torch.load('../offline/fcnn_white/FCNN_white.pth')
         self.writer= SummaryWriter('./logs/trainDNN/FCNN/white/{1}/tensorboard'.format(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))))
 
-        self.path_train = '../datas/Offline_A_up_SIMO.csv'
+        self.path_train = '../datas/old6.30/Offline_A_up_SIMO.csv'
         self.device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
     # fix random seeds
     def setup_seed(self,seed):
@@ -98,7 +98,7 @@ class DNN_offine_fcnn_white():
 
         model = torch.load('../offline/fcnn_white/FCNN_white.pth')
         model = model.double()
-        path_test = '../datas/Offline_B_up_SIMO.csv'
+        path_test = '../datas/old6.30/Offline_B_up_SIMO.csv'
         self.Test_loc(model, self.device, path_test, self.Num_classes)
         time_end = time.time()
         time_cost = time_end - time_start

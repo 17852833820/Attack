@@ -106,8 +106,8 @@ def Test_adv_network(model, network, device, test_loader, k, dmin, date):  # mod
 num_classes = 40
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
-path_train = '../../datas/Offline_B_down_SIMO.csv'
-path_test = '../../datas/Offline_B_up_SIMO.csv'
+path_train = '../../datas/old6.30/Offline_B_down_SIMO.csv'
+path_test = '../../datas/old6.30/Offline_B_up_SIMO.csv'
 model = torch.load('../offline/conv_white/ConvCNN_white.pth', map_location=torch.device('cpu'))
 CNN = Generator.Generator()
 

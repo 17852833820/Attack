@@ -19,9 +19,9 @@ class DNN_offine_conv_white():
         self.network = ConvCNN40.ConvCNN40()
         self.network = self.network.double()
         #self.network = torch.load('../offline/conv_white/ConvCNN_white.pth')#DNNA pre-trained
-        self.writer= SummaryWriter('./logs/trainDNN/CNN/white/{1}/tensorboard'.format(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))))
-        self.path_train = '../datas/Offline_A_up_SIMO.csv'
-        self.device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+        self.writer= SummaryWriter('./logs/trainDNN/CNN/white/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
+        self.path_train = '../datas/Online_A_up_SIMO.csv'
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # fix random seeds
     def setup_seed(self,seed):
         torch.manual_seed(seed)
@@ -50,6 +50,7 @@ class DNN_offine_conv_white():
                 optimizer.zero_grad()
                 outputs = model(inputs)
                 loss = criterion(outputs, pos)
+                print("loss{0}".format(loss))
                 SummaryWriter.add_scalar('loss',loss,Epoch)
                 loss.backward()
                 optimizer.step()
@@ -57,9 +58,9 @@ class DNN_offine_conv_white():
             print('[%d] loss: %.6f' % (Epoch + 1, running_loss))
         print('Finished Training')
         if isinstance(model, torch.nn.DataParallel):
-            torch.save(model.module, '../offline/conv_white/ConvCNN_white.pth')
+            torch.save(model.module, '../online/conv_white/ConvCNN_white.pth')
         else:
-            torch.save(model, '../offline/conv_white/ConvCNN_white.pth')
+            torch.save(model, '../online/conv_white/ConvCNN_white.pth')
 
 
     # test localization model
@@ -92,14 +93,14 @@ class DNN_offine_conv_white():
 
     def run(self):
         time_start = time.time()
-        network = torch.nn.DataParallel(self.network, device_ids=[3, 1, 2])
+        network = torch.nn.DataParallel(self.network, device_ids=[0])
         data_train = create_dataset('FD40', self.path_train, "train")
         dataloader_train = torch.utils.data.DataLoader(data_train, batch_size=128, shuffle=True, num_workers=16, pin_memory=True)
         self.Train_loc(network, dataloader_train, self.device, self.Num_epochs)
 
         model = torch.load('../offline/conv_white/ConvCNN_white.pth')
         model = model.double()
-        path_test = '../datas/Offline_B_up_SIMO.csv'
+        path_test = '../datas/old6.30/Offline_B_up_SIMO.csv'
         self.Test_loc(model, self.device, path_test, self.Num_classes)
 
         time_end = time.time()

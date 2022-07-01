@@ -21,7 +21,7 @@ class DNN_offine_conv_black():
         self.network = self.network.double()
         # self.network = torch.load('../offline/conv_black/ConvCNN_black.pth')
         self.writer= SummaryWriter('./logs/trainDNN/CNN/black/{1}/tensorboard'.format(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))))
-        self.path_train = '../datas/Offline_B_down_SIMO.csv'
+        self.path_train = '../datas/old6.30/Offline_B_down_SIMO.csv'
         self.device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
     def setup_seed(self,seed):
         torch.manual_seed(seed)
@@ -92,7 +92,7 @@ class DNN_offine_conv_black():
 
         model = torch.load('../offline/conv_black/ConvCNN_black.pth')
         model = model.double()
-        path_test = '../datas/Offline_B_up_SIMO.csv'
+        path_test = '../datas/old6.30/Offline_B_up_SIMO.csv'
         self.Test_loc(model, self.device, path_test, self.Num_classes)
 
         time_end = time.time()

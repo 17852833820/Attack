@@ -84,7 +84,7 @@ network = FCNN40.FCNN40_new()
 # network = torch.load('../offline/fcnn_white/FCNN_white_new.pth')
 network = network.double()
 
-path_train = '../datas/Offline_A_up_SIMO.csv'
+path_train = '../../datas/old6.30/Offline_A_up_SIMO.csv'
 device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
 print(device)
 network = torch.nn.DataParallel(network, device_ids=[2, 1, 0, 3])
@@ -94,7 +94,7 @@ Train_loc(network, dataloader_train, device, Num_epochs)
 
 model = torch.load('../offline/fcnn_white/FCNN_white_best1.pth')
 model = model.double()
-path_test = '../datas/Offline_B_up_SIMO.csv'
+path_test = '../../datas/old6.30/Offline_B_up_SIMO.csv'
 Test_loc(model, device, path_test, Num_classes)
 
 time_end = time.time()

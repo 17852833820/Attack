@@ -40,8 +40,8 @@ class T_offine_fcnn_white():
         self.setup_seed(3)
         self.num_classes = 40
         self.device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-        self.path_train = '../datas/Offline_B_down_SIMO.csv'
-        self.path_test = '../datas/Offline_B_up_SIMO.csv'
+        self.path_train = '../datas/old6.30/Offline_B_down_SIMO.csv'
+        self.path_test = '../datas/old6.30/Offline_B_up_SIMO.csv'
         self.model = torch.load('../offline/fcnn_white/FCNN_white.pth')
         self.model = torch.nn.DataParallel(self.model, device_ids=[1, 2, 3])
         self.CNN = Generator.Generator()

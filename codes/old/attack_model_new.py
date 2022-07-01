@@ -162,8 +162,8 @@ def Test_adv_network(model, network, device, test_loader, k, n, dmax, date):  # 
 num_classes = 40
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
-path_train = '../datas/Offline_B_down_SIMO.csv'
-path_test = '../datas/Offline_B_up_SIMO.csv'
+path_train = '../../datas/old6.30/Offline_B_down_SIMO.csv'
+path_test = '../../datas/old6.30/Offline_B_up_SIMO.csv'
 model = torch.load('../offline/fcnn_white/FCNN_white_best1.pth')
 model = torch.nn.DataParallel(model, device_ids=[0, 1, 2, 3])
 CNN = Generator.Generator()

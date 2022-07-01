@@ -116,8 +116,8 @@ def Test_adv_network(model, network, device, test_loader, k, n, dmax, date):  # 
 
 num_classes = 40
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-path_train = '../datas/Offline_B_down_SIMO.csv'
-path_test = '../datas/Offline_B_up_SIMO.csv'
+path_train = '../../datas/old6.30/Offline_B_down_SIMO.csv'
+path_test = '../../datas/old6.30/Offline_B_up_SIMO.csv'
 model = torch.load('../offline/fcnn_white/FCNN_white.pth')
 CNN = Generator.Generator()
 errors90_all = pickle.load(open("../offline/fcnn_white/FCNN_White_meta_error90_info.pkl", 'rb'))
