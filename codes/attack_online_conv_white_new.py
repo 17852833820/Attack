@@ -69,7 +69,7 @@ class T_offine_conv_white():
     # train adversarial network
     def Train_adv_network(self,model, network, device, train_loader, k, n, dmax, date):
         target_location = torch.tensor([(n // 5 + 1) / 8.0, (n % 5 + 1) / 5.0]).to(device)
-        d_new = dmax
+        d_new = dmax-0.2
         model = model.to(device)
         network = network.to(device)
         for param_model in model.parameters():  # fix parameters of loc model

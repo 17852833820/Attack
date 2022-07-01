@@ -47,7 +47,7 @@ class UT_offine_conv_white():
     # train adversarial network
     def Train_adv_network(self,model, network, device, train_loader, k, dmin, date):
         original_location = torch.tensor([(k // 5 + 1) / 8, (k % 5 + 1) / 5]).to(device)
-        d_new = dmin
+        d_new = 5*dmin
         model = model.to(device)
         network = network.to(device)
         for param_model in model.parameters():  # fix parameters of loc model

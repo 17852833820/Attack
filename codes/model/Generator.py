@@ -5,7 +5,11 @@ import torch.nn as nn
 class Generator(nn.Module):  #
     def __init__(self):
         super(Generator, self).__init__()
-        self.linear_weight = nn.Parameter(torch.rand(1, 56))
+        #offine
+        #self.linear_weight = nn.Parameter(torch.rand(1, 56))
+        #online
+        self.linear_weight = nn.Parameter(torch.rand(1, 52))
+
 
     def forward(self, x, delta=0.2):#x:B up
         weight_mapped = torch.tanh(self.linear_weight)*delta + 1
@@ -17,7 +21,10 @@ class Generator(nn.Module):  #
 class Generator0(nn.Module):  #
     def __init__(self):
         super(Generator0, self).__init__()
-        self.linear_weight = nn.Parameter(torch.rand(1, 56))
+        #offine
+        #self.linear_weight = nn.Parameter(torch.rand(1, 56))
+        #online
+        self.linear_weight = nn.Parameter(torch.rand(1, 52))
 
     def forward(self, x, delta=0.2):
         weight_mapped = torch.tanh(self.linear_weight)*delta + 1

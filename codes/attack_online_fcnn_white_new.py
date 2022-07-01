@@ -34,7 +34,7 @@ class T_offine_fcnn_white():
         self.Accs_b = np.empty((1, 2 + 1))
         self.Accs_a = np.empty((1, 2 + 1))
         self.Adv_weights = np.empty((1, 2 + 52))
-        self.writer= SummaryWriter('./logs/trainGAN/T-FCNN-white/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
+        self.writer= SummaryWriter('../runtime/logs/trainGAN/T-FCNN-white/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
 
     # 设置随机数种子
     def setup_seed(self,seed):
@@ -67,7 +67,7 @@ class T_offine_fcnn_white():
     # train adversarial network
     def Train_adv_network(self,model, network, device, train_loader, k, n, dmax, date):
         target_location = torch.tensor([(n // 5 + 1)/8.0, (n % 5 + 1)/5.0]).to(device)
-        d_new = dmax
+        d_new = dmax-0.2
         model = model.to(device)
         network = network.to(device)
         for param_model in model.parameters():  # fix parameters of loc model
@@ -95,9 +95,9 @@ class T_offine_fcnn_white():
                 loss1 = myloss1(output, target_location, d_new)
                 loss3 = myloss3(weights)
                 loss = loss1 + alpha * loss3  # total loss
-                self.writer.add_scalar('train/loss', loss, Epoch)
-                self.writer.add_scalar('train/loss1', loss1, Epoch)
-                self.writer.add_scalar('train/loss3', loss3, Epoch)
+                self.writer.add_scalar('train{0}-{1}/loss'.format(k,n), loss, Epoch)
+                self.writer.add_scalar('train{0}-{1}/loss1'.format(k,n), loss1, Epoch)
+                self.writer.add_scalar('train{0}-{1}/loss3'.format(k,n), loss3, Epoch)
                 loss.backward()
                 optimizer.step()
                 first_loss.append(loss1.cpu())
@@ -115,11 +115,15 @@ class T_offine_fcnn_white():
                     alpha = 5.0
                 else:
                     alpha = 0.1
-
+                if Epoch%1000==0:
+                    if isinstance(network, torch.nn.DataParallel):
+                        torch.save(network.module,'../online/adv_fcnn_white/adv_white_fcnn_new{0}'.format(Epoch) + '%d-' % k + '%d' % n + '.pth')
+                    else:
+                        torch.save(network, '../online/adv_fcnn_white/adv_white_fcnn_new{0}'.format(Epoch) + '%d-' % k + '%d' % n + '.pth')
         if isinstance(network, torch.nn.DataParallel):
-            torch.save(network.module, '../offline/adv_fcnn_white/adv_white_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
+            torch.save(network.module, '../online/adv_fcnn_white/adv_white_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
         else:
-            torch.save(network, '../offline/adv_fcnn_white/adv_white_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
+            torch.save(network, '../online/adv_fcnn_white/adv_white_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
         return network
 
 
