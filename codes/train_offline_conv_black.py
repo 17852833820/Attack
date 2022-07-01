@@ -48,7 +48,7 @@ class DNN_offine_conv_black():
                 loss.backward()
                 optimizer.step()
                 running_loss += loss.cpu()
-            if Epoch%50==0:
+            if Epoch%100==0:
                 if isinstance(model, torch.nn.DataParallel):
                     torch.save(model.module, '../online/conv_black/ConvCNN_black{0}.pth'.format(Epoch))
                 else:
@@ -81,6 +81,9 @@ class DNN_offine_conv_black():
                     loc_gt[:, 0], loc_gt[:, 1] = loc_gt[:, 0]*8.0*1.5, loc_gt[:, 1]*5.0*1.5
                     temp = F.pairwise_distance(loc_pred, loc_gt, p=2)
                     errs_k = np.append(errs_k, temp.cpu())
+            if len(errs_k)==0:
+                continue
+                print("temp null")
             errs_all = np.append(errs_all, errs_k)
             errs_90_all = np.append(errs_90_all, np.quantile(errs_k, 0.9))
             print('[%d] 0.5 & 0.9 errors: %.5f & %.5f'% (k, np.quantile(errs_k, 0.5),  np.quantile(errs_k, 0.9)))

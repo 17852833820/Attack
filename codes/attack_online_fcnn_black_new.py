@@ -19,8 +19,11 @@ class T_offine_fcnn_white():
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.path_train = '../datas/Online_B_down_SIMO.csv'
         self.path_test = '../datas/Online_B_up_SIMO.csv'
-        self.model = torch.load('../online/fcnn_white/FCNN_white.pth')
-        self.model = torch.nn.DataParallel(self.model, device_ids=[0])
+        '''self.model = torch.load('../online/fcnn_white/FCNN_white.pth')
+        self.model = torch.nn.DataParallel(self.model, device_ids=[0])'''
+        self.model_surrogate = torch.load('../offline/conv_black/ConvCNN_black.pth', map_location=torch.device('cpu'))
+        self.model_victim = torch.load('../offline/fcnn_white/FCNN_white.pth', map_location=torch.device('cpu'))
+
         self.CNN = Generator.Generator()
         self.errors90_all = pickle.load(open("../online/fcnn_white/FCNN_white_meta_error90_info.pkl", 'rb'))
         self.date = 0.15
@@ -28,6 +31,7 @@ class T_offine_fcnn_white():
         self.Prediction_b = np.empty((1, 1 + 500 * 2))
         self.Prediction_a = np.empty((1, 1 + 500 * 2))
         self.Errs_k_b = np.empty((1, 2 + 500))
+
         self.Errs_n_b = np.empty((1, 2 + 500))
         self.Errs_k_a = np.empty((1, 2 + 500))
         self.Errs_n_a = np.empty((1, 2 + 500))
