@@ -18,7 +18,7 @@ class Location():
         location.run()
 
 if __name__ == '__main__':
-    mode='white'
+    mode='black'
     DNN='FCNN'
     location=Location(mode,DNN)
     location.run()

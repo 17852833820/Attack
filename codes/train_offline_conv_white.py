@@ -56,6 +56,11 @@ class DNN_offine_conv_white():
                 running_loss += loss.cpu()
             self.writer.add_scalar('running_loss', running_loss, Epoch + 1)
             print('[%d] loss: %.6f' % (Epoch + 1, running_loss))
+            if Epoch%50==0:
+                if isinstance(model, torch.nn.DataParallel):
+                    torch.save(model.module, '../online/conv_white/ConvCNN_white{0}.pth'.format(Epoch))
+                else:
+                    torch.save(model, '../online/conv_white/ConvCNN_white{0}.pth'.format(Epoch))
         print('Finished Training')
         if isinstance(model, torch.nn.DataParallel):
             torch.save(model.module, '../online/conv_white/ConvCNN_white.pth')

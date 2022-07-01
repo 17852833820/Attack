@@ -31,9 +31,6 @@ class DNN_offine_fcnn_white():
         random.seed(seed)
         torch.backends.cudnn.deterministic = True
 
-
-
-
     # train localization models
     def Train_loc(self,model, dataloader_train, device, num_epochs=200):
         criterion = nn.MSELoss() #loss
@@ -53,6 +50,11 @@ class DNN_offine_fcnn_white():
                 loss.backward()
                 optimizer.step()
                 running_loss += loss.cpu()
+            if Epoch%50==0:
+                if isinstance(model, torch.nn.DataParallel):
+                    torch.save(model.module, '../online/fcnn_white/FCNN_white{0}.pth'.format(Epoch))
+                else:
+                    torch.save(model, '../online/fcnn_white/FCNN_white{0}.pth'.format(Epoch))
             self.writer.add_scalar('running_loss', running_loss, Epoch + 1)
             print('[%d] loss: %.6f' % (Epoch + 1, running_loss))
         print('Finished Training')
@@ -76,12 +78,14 @@ class DNN_offine_fcnn_white():
                     _, loc_gt, in_feats = data
                     loc_gt, in_feats = loc_gt.to(device), in_feats.to(device)
 
-                    loc_pred = model(in_feats)
+                    loc_pred = model(in_feats)#250,2
                     loc_pred[:, 0], loc_pred[:, 1] = loc_pred[:, 0]*8.0*1.5, loc_pred[:, 1]*5.0*1.5
                     loc_gt[:, 0], loc_gt[:, 1] = loc_gt[:, 0]*8.0*1.5, loc_gt[:, 1]*5.0*1.5
                     temp = F.pairwise_distance(loc_pred, loc_gt, p=2)
                     errs_k = np.append(errs_k, temp.cpu())
-            if errs_k==0:continue
+            if len(errs_k)==0:
+                print('temp None')
+                continue
             errs_all = np.append(errs_all, errs_k)
             errs_90_all = np.append(errs_90_all, np.quantile(errs_k, 0.9))
             print('[%d] 0.5 & 0.9 errors: %.5f & %.5f'% (k, np.quantile(errs_k, 0.5),  np.quantile(errs_k, 0.9)))

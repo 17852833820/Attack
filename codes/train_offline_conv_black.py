@@ -48,6 +48,11 @@ class DNN_offine_conv_black():
                 loss.backward()
                 optimizer.step()
                 running_loss += loss.cpu()
+            if Epoch%50==0:
+                if isinstance(model, torch.nn.DataParallel):
+                    torch.save(model.module, '../online/conv_black/ConvCNN_black{0}.pth'.format(Epoch))
+                else:
+                    torch.save(model, '../online/conv_black/ConvCNN_black{0}.pth'.format(Epoch))
             self.writer.add_scalar('running_loss', running_loss, Epoch + 1)
             print('[%d] loss: %.6f' % (Epoch + 1, running_loss))
         print('Finished Training')
@@ -93,7 +98,7 @@ class DNN_offine_conv_black():
 
         model = torch.load('../online/conv_black/ConvCNN_black.pth')
         model = model.double()
-        path_test = '../datas/Online_B_down_SIMO.csv'
+        path_test = '../datas/Online_B_up_SIMO.csv'
         self.Test_loc(model, self.device, path_test, self.Num_classes)
 
         time_end = time.time()
