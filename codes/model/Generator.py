@@ -7,10 +7,10 @@ class Generator(nn.Module):  #
         super(Generator, self).__init__()
         self.linear_weight = nn.Parameter(torch.rand(1, 56))
 
-    def forward(self, x, delta=0.2):
+    def forward(self, x, delta=0.2):#x:B up
         weight_mapped = torch.tanh(self.linear_weight)*delta + 1
         # x = torch.mul(torch.kron(torch.ones(2, 1).to("cuda:1"), weight_mapped), x)  # 50,1,2,56
-        x = torch.mul(torch.kron(torch.ones(2, 1).cuda(), weight_mapped), x)
+        x = torch.mul(torch.kron(torch.ones(2, 1).cpu(), weight_mapped), x)#weight*data
         return x, weight_mapped
 
 

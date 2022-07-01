@@ -21,7 +21,7 @@ def setup_seed(seed):
     torch.backends.cudnn.deterministic = True
 
 
-# setup_seed(3)
+setup_seed(3)
 
 
 class MyLoss2(nn.Module):
@@ -48,7 +48,7 @@ def Train_adv_network(model, network, device, train_loader, k, dmin, date):
         param_model.requires_grad = False
 
     myloss2 = MyLoss2().to(device)
-    # optimizer = optim.SGD(network.parameters(), lr=0.1, momentum=0.5)
+    # optimizer = optim.SGD(network.parameters(), lr=0.05, momentum=0.5)
     optimizer = optim.Adadelta(network.parameters(), lr=0.5)
     for data in train_loader:
         _, pos, inputs = data
@@ -68,15 +68,17 @@ def Train_adv_network(model, network, device, train_loader, k, dmin, date):
             if max(second_loss) <= 0.001:
                 break
     if isinstance(network, torch.nn.DataParallel):
-        torch.save(network.module, '../offline/adv_conv_black/ut_adv_black_conv' + '%d-' % k + '.pth')
+        torch.save(network.module, '../offline/adv_fcnn_white/ut_adv_white_fcnn' + '%d-' % k + '.pth')
     else:
-        torch.save(network, '../offline/adv_conv_black/ut_adv_black_conv' + '%d-' % k + '.pth')
+        torch.save(network, '../offline/adv_fcnn_white/ut_adv_white_fcnn' + '%d-' % k + '.pth')
     return network
 
 
 def Test_adv_network(model, network, device, test_loader, k, dmin, date):  # model: Loc model, CNN: perturbation model, K: original location, dmin：threshold
     err_k_b = np.array([])  # localization errors to original location before perturbation
     err_k_a = np.array([])  # localization errors to original location after perturbation
+    loc_prediction_b = np.array([])
+    loc_prediction_a = np.array([])
     with torch.no_grad():
         for data in test_loader:
             _, pos, inputs = data
@@ -94,26 +96,26 @@ def Test_adv_network(model, network, device, test_loader, k, dmin, date):  # mod
 
             err_k_b = np.append(err_k_b, temp_k_b.cpu())
             err_k_a = np.append(err_k_a, temp_k_a.cpu())
+            loc_prediction_b = np.append(loc_prediction_b, predict.cpu())
+            loc_prediction_a = np.append(loc_prediction_a, output.cpu())
     final_acc_a = np.sum(err_k_a >= dmin) / err_k_a.shape[0]
     final_acc_b = np.sum(err_k_b >= dmin) / err_k_b.shape[0]
     print('【%d】' % k)
     print('Before Error_k 0.5 & 0.9: %.5f & %.5f' % (np.quantile(err_k_b, 0.5), np.quantile(err_k_b, 0.9)))
     print('After Error_k 0.5 & 0.9: %.5f & %.5f' % (np.quantile(err_k_a, 0.5), np.quantile(err_k_a, 0.9)))
     print(' Before and After Attack accuracy: %.5f' % final_acc_b, final_acc_a)
-    return k, err_k_b, err_k_a, final_acc_b, final_acc_a, adv_weight.cpu()
+    return k, err_k_b, err_k_a, final_acc_b, final_acc_a, adv_weight.cpu(), loc_prediction_b, loc_prediction_a
 
 
 num_classes = 40
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
-path_train = '../datas/Offline_B_down_SIMO.csv'
-path_test = '../datas/Offline_B_up_SIMO.csv'
-model_surrogate = torch.load('../offline/fcnn_black/FCNN_black.pth', map_location=torch.device('cpu'))
-model_victim = torch.load('../offline/conv_white/ConvCNN_white.pth', map_location=torch.device('cpu'))
+path_train = '../../datas/Offline_B_down_SIMO.csv'
+path_test = '../../datas/Offline_B_up_SIMO.csv'
+model = torch.load('../offline/fcnn_white/FCNN_white.pth', map_location=torch.device('cpu'))
 CNN = Generator.Generator()
-CNN_random = Generator.Generator1()
 
-errors90_all = pickle.load(open("../offline/conv_white/ConvCNN_white_meta_error90_info.pkl", 'rb'))
+errors90_all = pickle.load(open("../../offline/fcnn_white/FCNN_white_meta_error90_info.pkl", 'rb'))
 date = 0.2
 
 Errs_k_b = np.empty((1, 1+250))
@@ -121,32 +123,38 @@ Errs_k_a = np.empty((1, 1+250))
 Accs_b = np.empty((1, 1+1))
 Accs_a = np.empty((1, 1+1))
 Adv_weights = np.empty((1, 1+56))
+Perdiction_b = np.empty((1, 1+500))
+Perdiction_a = np.empty((1, 1+500))
 
 for k in np.arange(num_classes):
     data_train = create_dataset('FD40', path_train, k)
     data_test = create_dataset('FD40', path_test, k)
     dataloader_train = torch.utils.data.DataLoader(data_train, batch_size=250, shuffle=True)
-    dataloader_test = torch.utils.data.DataLoader(data_test, batch_size=250, shuffle=True)
+    dataloader_test = torch.utils.data.DataLoader(data_test, batch_size=250, shuffle=False)
     d_min = errors90_all[k] + 0.75
 
-    # network = torch.load('../offline/adv_conv_black/ut_adv_black_conv' + '%d-' % k + '.pth')
-    # network = Train_adv_network(model_surrogate, network, device, dataloader_train, k, d_min+0.2, date)
-    _, err_k_b, err_k_a, final_acc_b, final_acc_a, adv_weight = Test_adv_network(model_victim, CNN_random, device, dataloader_test, k, d_min, date)
+    network = torch.load('../offline/adv_fcnn_white/ut_adv_white_fcnn' + '%d-' % k + '.pth')
+    # network = Train_adv_network(model, network, device, dataloader_train, k, d_min+0.2, date)
+    _, err_k_b, err_k_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = Test_adv_network(model, network, device, dataloader_test, k, d_min, date)
     Errs_k_b = np.append(Errs_k_b, np.array([np.concatenate((np.array([k]), err_k_b))]), axis=0)
     Errs_k_a = np.append(Errs_k_a, np.array([np.concatenate((np.array([k]), err_k_a))]), axis=0)
     Accs_b = np.append(Accs_b, np.array([np.concatenate((np.array([k]), np.array([final_acc_b])))]), axis=0)
     Accs_a = np.append(Accs_a, np.array([np.concatenate((np.array([k]), np.array([final_acc_a])))]), axis=0)
     Adv_weights = np.append(Adv_weights, np.concatenate((np.array([[k]]), adv_weight), axis=1), axis=0)
+    Perdiction_a = np.append(Perdiction_a, np.array([np.concatenate((np.array([k]), loc_prediction_a))]), axis=0)
+    Perdiction_b = np.append(Perdiction_b, np.array([np.concatenate((np.array([k]), loc_prediction_b))]), axis=0)
 
 Errs_k_b = np.delete(Errs_k_b, [0], axis=0)
 Errs_k_a = np.delete(Errs_k_a, [0], axis=0)
 Accs_b = np.delete(Accs_b, [0], axis=0)
 Accs_a = np.delete(Accs_a, [0], axis=0)
 Adv_weights = np.delete(Adv_weights, [0], axis=0)
+Perdiction_b = np.delete(Perdiction_b, [0], axis=0)
+Perdiction_a = np.delete(Perdiction_a, [0], axis=0)
 print('Overall Accuracy Before and After: %.5f & %.5f' % (np.mean(Accs_b[:, 1]), np.mean(Accs_a[:, 1])))
 print('Before Error_k 0.5 & 0.9: %.5f & %.5f' % (np.quantile(Errs_k_b[:, 1:251], 0.5), np.quantile(Errs_k_b[:, 1:251], 0.9)))
 print('After Error_k 0.5 & 0.9: %.5f & %.5f' % (np.quantile(Errs_k_a[:, 1:251], 0.5), np.quantile(Errs_k_a[:, 1:251], 0.9)))
 
 
-# file_name = '../offline/conv_white/ut_Attack_Results_all_conv_black.mat'
-# savemat(file_name, {'Errors_k_b': Errs_k_b, 'Errors_k_a': Errs_k_a, 'Accuracy_before': Accs_b, 'Accuracy_after': Accs_a, 'Adv_weights': Adv_weights})
+file_name = '../../offline/fcnn_white/ut_Attack_Results_all_fcnn_white.mat'
+savemat(file_name, {'Errors_k_b': Errs_k_b, 'Errors_k_a': Errs_k_a, 'Accuracy_before': Accs_b, 'Accuracy_after': Accs_a, 'Adv_weights': Adv_weights , 'Perdiction_b': Perdiction_b, 'Perdiction_a': Perdiction_a})

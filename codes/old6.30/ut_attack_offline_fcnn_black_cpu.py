@@ -108,14 +108,14 @@ def Test_adv_network(model, network, device, test_loader, k, dmin, date):  # mod
 num_classes = 40
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
-path_train = '../datas/Offline_B_down_SIMO.csv'
-path_test = '../datas/Offline_B_up_SIMO.csv'
+path_train = '../../datas/Offline_B_down_SIMO.csv'
+path_test = '../../datas/Offline_B_up_SIMO.csv'
 model_surrogate = torch.load('../offline/conv_black/ConvCNN_black.pth', map_location=torch.device('cpu'))
 model_victim = torch.load('../offline/fcnn_white/FCNN_white.pth', map_location=torch.device('cpu'))
 CNN = Generator.Generator()
 CNN_random = Generator.Generator1()
 
-errors90_all = pickle.load(open("../offline/fcnn_white/FCNN_white_meta_error90_info.pkl", 'rb'))
+errors90_all = pickle.load(open("../../offline/fcnn_white/FCNN_white_meta_error90_info.pkl", 'rb'))
 date = 0.2
 
 Errs_k_b = np.empty((1, 1+250))

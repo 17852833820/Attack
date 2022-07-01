@@ -10,6 +10,7 @@ from scipy.io import savemat
 import math
 import pickle
 from codes.model import Generator
+from tensorboardX import SummaryWriter
 
 
 # 设置随机数种子
