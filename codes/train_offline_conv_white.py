@@ -15,10 +15,10 @@ class DNN_offine_conv_white():
     def __init__(self):
         self.setup_seed(2)
         self.Num_classes = 40
-        self.Num_epochs = 500  # number of training epochs
+        self.Num_epochs = 100  # number of training epochs
         self.network = ConvCNN40.ConvCNN40()
         self.network = self.network.double()
-        self.network = torch.load('../online/conv_white/ConvCNN_white150.pth')#DNNA pre-trained
+        self.network = torch.load('../online/conv_white/ConvCNN_white200.pth')#DNNA pre-trained
         #self.writer= SummaryWriter('./logs/trainDNN/CNN/white/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
         self.writer= SummaryWriter('./logs/trainDNN/CNN/white/2022-07-01-16-38-07/tensorboard2')
         self.path_train = '../datas/Online_A_up_SIMO.csv'
@@ -45,6 +45,8 @@ class DNN_offine_conv_white():
         for Epoch in range(num_epochs):
             running_loss = 0.0
             for data in dataloader_train:
+
+                
                 _, pos, inputs = data  # loc_xy, features
                 pos, inputs = pos.to(device), inputs.to(device)
 
@@ -88,7 +90,7 @@ class DNN_offine_conv_white():
                     loc_gt[:, 0], loc_gt[:, 1] = loc_gt[:, 0]*8.0*1.5, loc_gt[:, 1]*5.0*1.5
                     temp = F.pairwise_distance(loc_pred, loc_gt, p=2)
                     errs_k = np.append(errs_k, temp.cpu())
-            if errs_k==0:continue
+            if len(errs_k)==0:continue
             errs_all = np.append(errs_all, errs_k)
             errs_90_all = np.append(errs_90_all, np.quantile(errs_k, 0.9))
             print('[%d] 0.5 & 0.9 errors: %.5f & %.5f'% (k, np.quantile(errs_k, 0.5),  np.quantile(errs_k, 0.9)))
@@ -103,7 +105,7 @@ class DNN_offine_conv_white():
         network = torch.nn.DataParallel(self.network, device_ids=[0])
         data_train = create_dataset('FD40', self.path_train, "train")
         dataloader_train = torch.utils.data.DataLoader(data_train, batch_size=128, shuffle=True, num_workers=0, pin_memory=True)
-        self.Train_loc(network, dataloader_train, self.device, self.Num_epochs)
+        #self.Train_loc(network, dataloader_train, self.device, self.Num_epochs)
 
         model = torch.load('../online/conv_white/ConvCNN_white.pth')
         model = model.double()
