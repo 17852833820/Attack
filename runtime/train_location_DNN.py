@@ -22,3 +22,5 @@ if __name__ == '__main__':
     DNN='CNN'
     location=Location(mode,DNN)
     location.run()
+
+
