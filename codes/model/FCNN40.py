@@ -6,7 +6,10 @@ import torch.nn.functional as F
 class FCNN40_new(nn.Module):
     def __init__(self):
         super(FCNN40_new, self).__init__()
-        self.inputs = 1 * 2 * 56  # 输入1x2 SIMO 56个子载波
+        #offine
+        # self.inputs = 1 * 2 * 56  # 输入1x2 SIMO 56个子载?波
+        #online
+        self.inputs = 1 * 2 * 52
         self.outputs = 2  # 输出大小
         self.l1 = nn.Linear(self.inputs, 1024)
         self.l2 = nn.Linear(1024, 512)
@@ -17,7 +20,10 @@ class FCNN40_new(nn.Module):
 
     def forward(self, x):
         x = torch.nn.functional.normalize(x, float('inf'), dim=3)
-        x = x.view(x.shape[0], 1 * 2 * 56)
+        #offine
+        # x = x.view(x.shape[0], 1 * 2 * 56)
+        #online
+        x = x.view(x.shape[0], 1 * 2 * 52)
         x = self.l1(x)
         x = F.relu(self.l2(x))
         x = self.l3(x)

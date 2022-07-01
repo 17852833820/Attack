@@ -11,7 +11,10 @@ class ConvCNN40(nn.Module):
         self.conv1 = nn.Conv2d(1, 256, (1, 1))
         self.conv2 = nn.Conv2d(256, 128, (1, 1))
         self.conv3 = nn.Conv2d(128, 128, (1, 1))
-        self.fc1 = nn.Linear(128 * 112, 512)
+        #offine
+        #self.fc1 = nn.Linear(128 * 112, 512)
+        #online
+        self.fc1 = nn.Linear(128 * 104, 512)
         self.fc2 = nn.Linear(512, 256)
         self.fc3 = nn.Linear(256, 2)
 

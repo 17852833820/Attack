@@ -16,13 +16,13 @@ class DNN_offine_conv_black():
         # fix random seeds
         self.setup_seed(2)
         self.Num_classes = 40
-        self.Num_epochs = 300  # number of training epochs
+        self.Num_epochs = 500  # number of training epochs
         self.network = ConvCNN40.ConvCNN40()
         self.network = self.network.double()
         # self.network = torch.load('../offline/conv_black/ConvCNN_black.pth')
-        self.writer= SummaryWriter('./logs/trainDNN/CNN/black/{1}/tensorboard'.format(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))))
-        self.path_train = '../datas/old6.30/Offline_B_down_SIMO.csv'
-        self.device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+        self.writer= SummaryWriter('./logs/trainDNN/CNN/black/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
+        self.path_train = '../datas/Online_B_down_SIMO.csv'
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     def setup_seed(self,seed):
         torch.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
@@ -44,16 +44,17 @@ class DNN_offine_conv_black():
                 optimizer.zero_grad()
                 outputs = model(inputs)
                 loss = criterion(outputs, pos)
-                SummaryWriter.add_scalar('loss',loss,Epoch)
+                self.writer.add_scalar('loss', loss, Epoch )
                 loss.backward()
                 optimizer.step()
                 running_loss += loss.cpu()
+            self.writer.add_scalar('running_loss', running_loss, Epoch + 1)
             print('[%d] loss: %.6f' % (Epoch + 1, running_loss))
         print('Finished Training')
         if isinstance(model, torch.nn.DataParallel):
-            torch.save(model.module, '../offline/conv_black/ConvCNN_black.pth')
+            torch.save(model.module, '../online/conv_black/ConvCNN_black.pth')
         else:
-            torch.save(model, '../offline/conv_black/ConvCNN_black.pth')
+            torch.save(model, '../online/conv_black/ConvCNN_black.pth')
 
 
     # test localization model
@@ -63,7 +64,7 @@ class DNN_offine_conv_black():
         model = model.to(device)
         for k in range(Num_classes):
             dataset = create_dataset('FD40', testdatapath, k)
-            dataloader = torch.utils.data.DataLoader(dataset, batch_size=250, shuffle=False, num_workers=16, pin_memory=True)
+            dataloader = torch.utils.data.DataLoader(dataset, batch_size=250, shuffle=False, num_workers=0, pin_memory=True)
             errs_k = np.array([])  # localization errors of k-th position
             with torch.no_grad():
                 for data in dataloader:
@@ -79,20 +80,20 @@ class DNN_offine_conv_black():
             errs_90_all = np.append(errs_90_all, np.quantile(errs_k, 0.9))
             print('[%d] 0.5 & 0.9 errors: %.5f & %.5f'% (k, np.quantile(errs_k, 0.5),  np.quantile(errs_k, 0.9)))
 
-        pickle.dump(errs_all, open("../offline/conv_black/ConvCNN_black_meta_error_all_info.pkl", "wb"))
-        pickle.dump(errs_90_all, open("../offline/conv_black/ConvCNN_black_meta_error90_info.pkl", "wb"))
+        pickle.dump(errs_all, open("../online/conv_black/ConvCNN_black_meta_error_all_info.pkl", "wb"))
+        pickle.dump(errs_90_all, open("../online/conv_black/ConvCNN_black_meta_error90_info.pkl", "wb"))
         print('[Total] 0.5 & 0.9 errors: %.5f & %.5f' % (np.quantile(errs_all, 0.5), np.quantile(errs_all, 0.9)))
 
     def run(self):
         time_start = time.time()
-        network = torch.nn.DataParallel(self.network, device_ids=[3, 0, 1, 2])
+        network = torch.nn.DataParallel(self.network, device_ids=[0])
         data_train = create_dataset('FD40', self.path_train, "train")
-        dataloader_train = torch.utils.data.DataLoader(data_train, batch_size=128, shuffle=True, num_workers=16, pin_memory=True)
+        dataloader_train = torch.utils.data.DataLoader(data_train, batch_size=128, shuffle=True, num_workers=0, pin_memory=True)
         self.Train_loc(network, dataloader_train, self.device, self.Num_epochs)
 
-        model = torch.load('../offline/conv_black/ConvCNN_black.pth')
+        model = torch.load('../online/conv_black/ConvCNN_black.pth')
         model = model.double()
-        path_test = '../datas/old6.30/Offline_B_up_SIMO.csv'
+        path_test = '../datas/Online_B_down_SIMO.csv'
         self.Test_loc(model, self.device, path_test, self.Num_classes)
 
         time_end = time.time()

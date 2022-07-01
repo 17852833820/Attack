@@ -50,11 +50,11 @@ class DNN_offine_conv_white():
                 optimizer.zero_grad()
                 outputs = model(inputs)
                 loss = criterion(outputs, pos)
-                print("loss{0}".format(loss))
-                SummaryWriter.add_scalar('loss',loss,Epoch)
+                self.writer.add_scalar('loss', loss, Epoch )
                 loss.backward()
                 optimizer.step()
                 running_loss += loss.cpu()
+            self.writer.add_scalar('running_loss', running_loss, Epoch + 1)
             print('[%d] loss: %.6f' % (Epoch + 1, running_loss))
         print('Finished Training')
         if isinstance(model, torch.nn.DataParallel):
@@ -70,7 +70,7 @@ class DNN_offine_conv_white():
         model = model.to(device)
         for k in range(Num_classes):
             dataset = create_dataset('FD40', testdatapath, k)
-            dataloader = torch.utils.data.DataLoader(dataset, batch_size=250, shuffle=False, num_workers=16, pin_memory=True)
+            dataloader = torch.utils.data.DataLoader(dataset, batch_size=250, shuffle=False, num_workers=0, pin_memory=True)
             errs_k = np.array([])  # localization errors of k-th position
             with torch.no_grad():
                 for data in dataloader:
@@ -82,12 +82,13 @@ class DNN_offine_conv_white():
                     loc_gt[:, 0], loc_gt[:, 1] = loc_gt[:, 0]*8.0*1.5, loc_gt[:, 1]*5.0*1.5
                     temp = F.pairwise_distance(loc_pred, loc_gt, p=2)
                     errs_k = np.append(errs_k, temp.cpu())
+            if errs_k==0:continue
             errs_all = np.append(errs_all, errs_k)
             errs_90_all = np.append(errs_90_all, np.quantile(errs_k, 0.9))
             print('[%d] 0.5 & 0.9 errors: %.5f & %.5f'% (k, np.quantile(errs_k, 0.5),  np.quantile(errs_k, 0.9)))
 
-        pickle.dump(errs_all, open("../offline/conv_white/ConvCNN_white_meta_error_all_info.pkl", "wb"))
-        pickle.dump(errs_90_all, open("../offline/conv_white/ConvCNN_white_meta_error90_info.pkl", "wb"))
+        pickle.dump(errs_all, open("../online/conv_white/ConvCNN_white_meta_error_all_info.pkl", "wb"))
+        pickle.dump(errs_90_all, open("../online/conv_white/ConvCNN_white_meta_error90_info.pkl", "wb"))
         print('[Total] 0.5 & 0.9 errors: %.5f & %.5f' % (np.quantile(errs_all, 0.5), np.quantile(errs_all, 0.9)))
 
 
@@ -95,12 +96,12 @@ class DNN_offine_conv_white():
         time_start = time.time()
         network = torch.nn.DataParallel(self.network, device_ids=[0])
         data_train = create_dataset('FD40', self.path_train, "train")
-        dataloader_train = torch.utils.data.DataLoader(data_train, batch_size=128, shuffle=True, num_workers=16, pin_memory=True)
+        dataloader_train = torch.utils.data.DataLoader(data_train, batch_size=128, shuffle=True, num_workers=0, pin_memory=True)
         self.Train_loc(network, dataloader_train, self.device, self.Num_epochs)
 
-        model = torch.load('../offline/conv_white/ConvCNN_white.pth')
+        model = torch.load('../online/conv_white/ConvCNN_white.pth')
         model = model.double()
-        path_test = '../datas/old6.30/Offline_B_up_SIMO.csv'
+        path_test = '../datas/Online_B_up_SIMO.csv'
         self.Test_loc(model, self.device, path_test, self.Num_classes)
 
         time_end = time.time()
