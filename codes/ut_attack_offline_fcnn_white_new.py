@@ -62,7 +62,7 @@ class UT_offine_fcnn_white():
             pos, inputs = pos.to(device), inputs.to(device)
             loss_temp = 0.0
             alpha = 0.1
-            for Epoch in range(4000):  #
+            for Epoch in range(8000):  #
                 second_loss = []
                 third_loss = []
                 optimizer.zero_grad()
@@ -84,13 +84,13 @@ class UT_offine_fcnn_white():
                 # if abs(max(second_loss)-loss_temp) <= 0.000001 and d_new <= 3*dmin:
                 #     d_new = d_new*1.05
 
-                if Epoch > 100 and max(second_loss) <= 0.1 and max(third_loss) <= 0.1:
+                if Epoch > 100 and max(second_loss) <= 0.01 and max(third_loss) <= 0.01:
                     break
                 loss_temp = max(second_loss)
                 if max(second_loss) <= 0.1 and max(third_loss) >= 0.1:
-                    alpha = 30.0
+                    alpha = 10.0
                 else:
-                    alpha = 1.0
+                    alpha = 0.1
                 if Epoch%1000==0:
                     if isinstance(network, torch.nn.DataParallel):
                         torch.save(network.module,

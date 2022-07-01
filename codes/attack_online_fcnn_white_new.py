@@ -77,7 +77,7 @@ class T_offine_fcnn_white():
         myloss3 = WeightLoss().to(device)
 
         # optimizer = optim.SGD(network.parameters(), lr=0.5, momentum=0.5)
-        optimizer = optim.Adadelta(network.parameters(), lr=1.0)
+        optimizer = optim.Adadelta(network.parameters(), lr=50.0)
 
         for data in train_loader:
             _, pos, inputs = data
@@ -109,12 +109,12 @@ class T_offine_fcnn_white():
                 if Epoch > 100 and max(first_loss) <= 0.01 and max(third_loss) <= 0.3:
                     break
                 loss_temp = max(first_loss)'''
-                if max(first_loss) <= 0.1 and max(third_loss) <= 0.1:
+                if max(first_loss) <= 0.01 and max(third_loss) <= 0.01:
                     break
                 if max(first_loss) <= 0.1 and max(third_loss) >= 0.1:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
-                    alpha = 10.0
+                    alpha = 30.0
                 else:
-                    alpha = 0.1
+                    alpha = 0.0001
                 if Epoch%1000==0:
                     if isinstance(network, torch.nn.DataParallel):
                         torch.save(network.module,'../online/adv_fcnn_white/adv_white_fcnn_new{0}'.format(Epoch) + '%d-' % k + '%d' % n + '.pth')
@@ -181,9 +181,9 @@ class T_offine_fcnn_white():
             threshold_k = self.errors90_all[k] + self.d_max
             list_k = self.pairing(k, threshold_k)
             for n in list_k:
-                network = torch.load('../online/adv_fcnn_white/adv_white_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
-                '''network = self.Train_adv_network(self.model, self.CNN, self.device, dataloader_train, k, n, self.d_max,
-                                                 self.date)'''
+                #network = torch.load('../online/adv_fcnn_white/adv_white_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
+                network = self.Train_adv_network(self.model, self.CNN, self.device, dataloader_train, k, n, self.d_max,
+                                                 self.date)
                 _, _, err_k_b, err_k_a, err_n_b, err_n_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = self.Test_adv_network(
                     self.model, network, self.device, dataloader_test, k, n, self.d_max, self.date)
                 self.Errs_k_b = np.append(self.Errs_k_b, np.array([np.concatenate((np.array([k, n]), err_k_b))]),axis=0)

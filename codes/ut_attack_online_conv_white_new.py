@@ -62,7 +62,7 @@ class UT_offine_conv_white():
             loss_temp = 0.0
             alpha = 1.0
             pos, inputs = pos.to(device), inputs.to(device)
-            for Epoch in range(2000):  #
+            for Epoch in range(4000):  #
                 second_loss = []
                 third_loss = []
                 optimizer.zero_grad()
