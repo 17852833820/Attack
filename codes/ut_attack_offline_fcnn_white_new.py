@@ -56,7 +56,7 @@ class UT_offine_fcnn_white():
         myloss1 = MyLoss2().to(device)
         myloss2 = WeightLoss().to(device)
         # optimizer = optim.SGD(network.parameters(), lr=0.1, momentum=0.5)
-        optimizer = optim.Adadelta(network.parameters(), lr=0.25)
+        optimizer = optim.Adadelta(network.parameters(), lr=2.5)
         for data in train_loader:
             _, pos, inputs = data
             pos, inputs = pos.to(device), inputs.to(device)
@@ -87,20 +87,22 @@ class UT_offine_fcnn_white():
                 if Epoch > 100 and max(second_loss) <= 0.01 and max(third_loss) <= 0.01:
                     break
                 loss_temp = max(second_loss)
+                if max(second_loss) <= 0.01 and max(third_loss) <= 0.01:
+                    break
                 if max(second_loss) <= 0.1 and max(third_loss) >= 0.1:
                     alpha = 10.0
                 else:
-                    alpha = 0.1
-                if Epoch%1000==0:
+                    alpha = 0.001
+                '''if Epoch%1000==0:
                     if isinstance(network, torch.nn.DataParallel):
                         torch.save(network.module,
                                    '../online/adv_fcnn_white/ut_adv_white_fcnn_new-{0}'.format(Epoch) + '%d-' % k + '.pth')
                     else:
-                        torch.save(network, '../online/adv_fcnn_white/ut_adv_white_fcnn_new-{0}'.format(Epoch) + '%d-' % k + '.pth')
+                        torch.save(network, '../online/adv_fcnn_white/ut_adv_white_fcnn_new-{0}'.format(Epoch) + '%d-' % k + '.pth')'''
         if isinstance(network, torch.nn.DataParallel):
-            torch.save(network.module, '../online/adv_fcnn_white/ut_adv_white_fcnn_new' + '%d-' % k + '.pth')
+            torch.save(network.module, '../online/adv_fcnn_white/ut_adv_white_fcnn_newlr=2.5' + '%d-' % k + '.pth')
         else:
-            torch.save(network, '../online/adv_fcnn_white/ut_adv_white_fcnn_new' + '%d-' % k + '.pth')
+            torch.save(network, '../online/adv_fcnn_white/ut_adv_white_fcnn_newlr=2.5' + '%d-' % k + '.pth')
         return network
 
 
@@ -167,7 +169,7 @@ class UT_offine_fcnn_white():
         print('Before Error_k 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_k_b[:, 1:251], 0.5), np.quantile(self.Errs_k_b[:, 1:251], 0.9)))
         print('After Error_k 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_k_a[:, 1:251], 0.5), np.quantile(self.Errs_k_a[:, 1:251], 0.9)))
 
-        file_name = '../online/fcnn_white/ut_Attack_Results_all_fcnn_white_new.mat'
+        file_name = '../online/fcnn_white/ut_Attack_Results_all_fcnn_white_new-lr=2.5.mat'
         savemat(file_name, {'Errors_k_b': self.Errs_k_b, 'Errors_k_a': self.Errs_k_a, 'Accuracy_before': self.Accs_b, 'Accuracy_after': self.Accs_a, 'Adv_weights': self.Adv_weights , 'Perdiction_b': self.Perdiction_b, 'Perdiction_a': self.Perdiction_a})
 if __name__ == '__main__':
     attacker=UT_offine_fcnn_white()

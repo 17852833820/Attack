@@ -15,14 +15,14 @@ from codes.loss.loss import MyLoss1,WeightLoss
 class T_offine_conv_white():
     def __init__(self):
         self.num_classes = 10
-        self.device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-        self.path_train = '../datas/old6.30/Offline_B_down_SIMO.csv'
-        self.path_test = '../datas/old6.30/Offline_B_up_SIMO.csv'
-        self.model = torch.load('../offline/conv_white/ConvCNN_white.pth', map_location=torch.device('cpu'))#DNNA,train first
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.path_train = '../datas/Online_B_down_SIMO.csv'
+        self.path_test = '../datas/Online_B_up_SIMO.csv'
+        self.model = torch.load('../online/conv_white/ConvCNN_white.pth', map_location=torch.device('cpu'))#DNNA,train first
         self.model = torch.nn.DataParallel(self.model, device_ids=[0])
         self.CNN = Generator.Generator()
         self.CNN = self.CNN.to(self.device)#GAN generator
-        self.errors90_all = pickle.load(open("../offline/conv_white/ConvCNN_white_meta_error90_info.pkl", 'rb'))
+        self.errors90_all = pickle.load(open("../online/conv_white/ConvCNN_white_meta_error90_info.pkl", 'rb'))
         self.date = 0.15
         self.d_max = 0.3
         self.Perdiction_b = np.empty((1, 1 + 500 * 2))
@@ -34,7 +34,7 @@ class T_offine_conv_white():
         self.Accs_b = np.empty((1, 2 + 1))
         self.Accs_a = np.empty((1, 2 + 1))
         self.Adv_weights = np.empty((1, 2 + 52))
-        self.writer= SummaryWriter('./logs/trainGAN/T-CNN-white/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
+        self.writer= SummaryWriter('../runtime/logs/trainGAN/T-CNN-white/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
 
         self.setup_seed(3)
 
@@ -86,7 +86,7 @@ class T_offine_conv_white():
             pos, inputs = pos.to(device), inputs.to(device)
             loss_temp = 0.0
             alpha = 0.1
-            for Epoch in range(4000):  #
+            for Epoch in range(5000):  #
                 first_loss = []
                 third_loss = []
 
@@ -97,7 +97,9 @@ class T_offine_conv_white():
                 loss1 = myloss1(output, target_location, d_new)
                 loss3 = myloss3(weights)
                 loss = loss1 + alpha * loss3  # total loss
-
+                self.writer.add_scalar('train{0}-{1}/loss'.format(k, n), loss, Epoch)
+                self.writer.add_scalar('train{0}-{1}/loss1'.format(k, n), loss1, Epoch)
+                self.writer.add_scalar('train{0}-{1}/loss3'.format(k, n), loss3, Epoch)
                 loss.backward()
                 optimizer.step()
                 first_loss.append(loss1.cpu())
@@ -109,12 +111,12 @@ class T_offine_conv_white():
                 if Epoch > 100 and max(first_loss) <= 0.1 and max(third_loss) <= 0.1:  #
                     break
                 loss_temp = max(first_loss)'''
-                if max(first_loss) <= 0.1 and max(third_loss) <= 0.1:
+                if max(first_loss) <= 0.01 and max(third_loss) <= 0.01:
                     break
                 if max(first_loss) <= 0.1 and max(third_loss) >= 0.1:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
                     alpha = 5.0
                 else:
-                    alpha = 0.1
+                    alpha = 0.01
 
         if isinstance(network, torch.nn.DataParallel):
             torch.save(network.module, '../online/adv_conv_white/adv_white_conv' + '%d-' % k + '%d' % n + '.pth')
@@ -212,8 +214,8 @@ class T_offine_conv_white():
         print('Before Error_n 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_n_b[:, 2:252], 0.5), np.quantile(self.Errs_n_b[:, 2:252], 0.9)))
         print('After Error_n 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_n_a[:, 2:252], 0.5), np.quantile(self.Errs_n_a[:, 2:252], 0.9)))
 
-        file_name = '../offline/conv_white/Attack_Results_all_conv_white_new.mat'
+        file_name = '../online/conv_white/Attack_Results_all_conv_white_new.mat'
         savemat(file_name, {'Errors_k_b': self.Errs_k_b, 'Errors_n_b': self.Errs_n_b, 'Errors_k_a': self.Errs_k_a, 'Errors_n_a': self.Errs_n_a, 'Accuracy_before': self.Accs_b, 'Accuracy_after': self.Accs_a, 'Adv_weights': self.Adv_weights,'Prediction_b':self.Prediction_b,"Prediction_a":self.Prediction_a})
-'''if __name__ == '__main__':
+if __name__ == '__main__':
     attacker=T_offine_conv_white()
-    attacker.run()'''
+    attacker.run()

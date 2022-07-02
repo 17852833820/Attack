@@ -19,14 +19,14 @@ class UT_offine_fcnn_black():
         # self.setup_seed(3)
         self.num_classes = 40
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.path_train = '../datas/old6.30/Offline_B_down_SIMO.csv'
-        self.path_test = '../datas/old6.30/Offline_B_up_SIMO.csv'
-        self.model_surrogate = torch.load('../offline/conv_black/ConvCNN_black.pth', map_location=torch.device('cpu'))
-        self.model_victim = torch.load('../offline/fcnn_white/FCNN_white.pth', map_location=torch.device('cpu'))
+        self.path_train = '../datas/Online_B_down_SIMO.csv'
+        self.path_test = '../datas/Online_B_up_SIMO.csv'
+        self.model_surrogate = torch.load('../online/conv_black/ConvCNN_black.pth', map_location=torch.device('cpu'))
+        self.model_victim = torch.load('../online/fcnn_white/FCNN_white.pth', map_location=torch.device('cpu'))
         self.CNN = Generator.Generator()
         self.CNN_random = Generator.Generator1()
 
-        self.errors90_all = pickle.load(open("../offline/fcnn_white/FCNN_white_meta_error90_info.pkl", 'rb'))
+        self.errors90_all = pickle.load(open("../online/fcnn_white/FCNN_white_meta_error90_info.pkl", 'rb'))
         self.date = 0.15
 
         self.Errs_k_b = np.empty((1, 1 + 250))
@@ -36,7 +36,7 @@ class UT_offine_fcnn_black():
         self.Adv_weights = np.empty((1, 1 + 56))
         self.Perdiction_b = np.empty((1, 1 + 500))
         self.Perdiction_a = np.empty((1, 1 + 500))
-        self.writer= SummaryWriter('./logs/trainGAN/UT-FCNN-black/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
+        self.writer= SummaryWriter('../runtime/logs/trainGAN/UT-FCNN-black/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
 
     def setup_seed(self,seed):
         torch.manual_seed(seed)

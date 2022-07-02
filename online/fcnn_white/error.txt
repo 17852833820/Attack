@@ -1,0 +1,146 @@
+【0-1】
+Before Error_k 0.5 & 0.9: 0.17565 & 0.21308
+After Error_k 0.5 & 0.9: 0.15123 & 0.18839
+Before Error_n 0.5 & 0.9: 0.62483 & 0.63634
+After Error_n 0.5 & 0.9: 0.61842 & 0.62851
+ Before and After Attack accuracy: 0.00000 0.0
+【0-5】
+Before Error_k 0.5 & 0.9: 0.17565 & 0.21308
+After Error_k 0.5 & 0.9: 0.94809 & 1.00751
+Before Error_n 0.5 & 0.9: 2.30376 & 2.33632
+After Error_n 0.5 & 0.9: 1.57067 & 1.61575
+ Before and After Attack accuracy: 0.00000 0.0
+【1-0】
+Before Error_k 0.5 & 0.9: 0.23325 & 0.39745
+After Error_k 0.5 & 0.9: 0.54360 & 0.58787
+Before Error_n 0.5 & 0.9: 1.55351 & 1.70619
+After Error_n 0.5 & 0.9: 0.88906 & 0.92475
+ Before and After Attack accuracy: 0.00000 0.0
+【1-2】
+Before Error_k 0.5 & 0.9: 0.23325 & 0.39745
+After Error_k 0.5 & 0.9: 0.53045 & 0.57545
+Before Error_n 0.5 & 0.9: 0.64311 & 0.71917
+After Error_n 0.5 & 0.9: 0.80060 & 0.83110
+ Before and After Attack accuracy: 0.00000 0.0
+【1-6】
+Before Error_k 0.5 & 0.9: 0.23325 & 0.39745
+After Error_k 0.5 & 0.9: 0.19871 & 0.30602
+Before Error_n 0.5 & 0.9: 2.24810 & 2.34394
+After Error_n 0.5 & 0.9: 2.28140 & 2.35568
+ Before and After Attack accuracy: 0.00000 0.0
+【3-2】
+Before Error_k 0.5 & 0.9: 0.14410 & 0.29415
+After Error_k 0.5 & 0.9: 1.67850 & 1.71435
+Before Error_n 0.5 & 0.9: 1.47136 & 1.60964
+After Error_n 0.5 & 0.9: 0.76709 & 0.78996
+ Before and After Attack accuracy: 0.00000 0.0
+【3-4】
+Before Error_k 0.5 & 0.9: 0.14410 & 0.29415
+After Error_k 0.5 & 0.9: 1.65799 & 1.69771
+Before Error_n 0.5 & 0.9: 0.61568 & 0.66707
+After Error_n 0.5 & 0.9: 1.76305 & 1.80046
+ Before and After Attack accuracy: 0.00000 0.0
+【3-8】
+Before Error_k 0.5 & 0.9: 0.14410 & 0.29415
+After Error_k 0.5 & 0.9: 0.97320 & 1.04299
+Before Error_n 0.5 & 0.9: 2.33396 & 2.46134
+After Error_n 0.5 & 0.9: 3.42588 & 3.49462
+ Before and After Attack accuracy: 0.00000 0.0
+【4-2】
+Before Error_k 0.5 & 0.9: 0.11576 & 0.27586
+After Error_k 0.5 & 0.9: 2.19664 & 2.26477
+Before Error_n 0.5 & 0.9: 1.90054 & 2.10292
+After Error_n 0.5 & 0.9: 0.71882 & 0.75858
+ Before and After Attack accuracy: 0.00000 0.0
+【4-14】
+Before Error_k 0.5 & 0.9: 0.11576 & 0.27586
+After Error_k 0.5 & 0.9: 0.59881 & 0.72885
+Before Error_n 0.5 & 0.9: 5.42923 & 5.64704
+After Error_n 0.5 & 0.9: 6.02844 & 6.15787
+ Before and After Attack accuracy: 0.00000 0.0
+【5-11】
+Before Error_k 0.5 & 0.9: 0.38469 & 0.58644
+After Error_k 0.5 & 0.9: 2.01354 & 2.15646
+Before Error_n 0.5 & 0.9: 2.68301 & 2.89564
+After Error_n 0.5 & 0.9: 5.04912 & 5.19109
+ Before and After Attack accuracy: 0.00000 0.0
+【5-1】
+Before Error_k 0.5 & 0.9: 0.38469 & 0.58644
+After Error_k 0.5 & 0.9: 2.87550 & 2.96865
+Before Error_n 0.5 & 0.9: 3.43727 & 3.63610
+After Error_n 0.5 & 0.9: 0.61241 & 0.66597
+ Before and After Attack accuracy: 0.00000 0.0
+【6-12】
+Before Error_k 0.5 & 0.9: 1.79965 & 1.79986
+After Error_k 0.5 & 0.9: 1.79997 & 1.79999
+Before Error_n 0.5 & 0.9: 1.34195 & 1.34233
+After Error_n 0.5 & 0.9: 1.34166 & 1.34170
+ Before and After Attack accuracy: 0.00000 0.0
+【6-10】
+Before Error_k 0.5 & 0.9: 1.79965 & 1.79986
+After Error_k 0.5 & 0.9: 1.79927 & 1.79975
+Before Error_n 0.5 & 0.9: 0.60000 & 0.60000
+After Error_n 0.5 & 0.9: 0.60000 & 0.60000
+ Before and After Attack accuracy: 0.00000 0.0
+【6-2】
+Before Error_k 0.5 & 0.9: 1.79965 & 1.79986
+After Error_k 0.5 & 0.9: 3.80118 & 3.84636
+Before Error_n 0.5 & 0.9: 4.83701 & 4.83721
+After Error_n 0.5 & 0.9: 1.00078 & 1.03732
+ Before and After Attack accuracy: 0.00000 0.0
+【6-0】
+Before Error_k 0.5 & 0.9: 1.79965 & 1.79986
+After Error_k 0.5 & 0.9: 3.78409 & 3.82899
+Before Error_n 0.5 & 0.9: 6.02958 & 6.02978
+After Error_n 0.5 & 0.9: 0.72980 & 0.75824
+ Before and After Attack accuracy: 0.00000 0.0
+【8-14】
+Before Error_k 0.5 & 0.9: 0.59957 & 0.59981
+After Error_k 0.5 & 0.9: 3.88922 & 4.20611
+Before Error_n 0.5 & 0.9: 2.47428 & 2.47497
+After Error_n 0.5 & 0.9: 6.91525 & 7.23101
+ Before and After Attack accuracy: 0.00000 0.0
+【8-12】
+Before Error_k 0.5 & 0.9: 0.59957 & 0.59981
+After Error_k 0.5 & 0.9: 3.13936 & 3.46513
+Before Error_n 0.5 & 0.9: 1.34203 & 1.34266
+After Error_n 0.5 & 0.9: 4.97557 & 5.29909
+ Before and After Attack accuracy: 0.00000 0.0
+【8-4】
+Before Error_k 0.5 & 0.9: 0.59957 & 0.59981
+After Error_k 0.5 & 0.9: 4.54636 & 4.66173
+Before Error_n 0.5 & 0.9: 3.64923 & 3.64947
+After Error_n 0.5 & 0.9: 1.65851 & 1.76658
+ Before and After Attack accuracy: 0.00000 0.0
+【8-2】
+Before Error_k 0.5 & 0.9: 0.59957 & 0.59981
+After Error_k 0.5 & 0.9: 4.69782 & 4.77283
+Before Error_n 0.5 & 0.9: 4.83692 & 4.83717
+After Error_n 0.5 & 0.9: 0.77927 & 0.82927
+ Before and After Attack accuracy: 0.00000 0.0
+【9-17】
+Before Error_k 0.5 & 0.9: 0.00000 & 0.00001
+After Error_k 0.5 & 0.9: 0.32540 & 0.70918
+Before Error_n 0.5 & 0.9: 4.24264 & 4.24265
+After Error_n 0.5 & 0.9: 4.56497 & 4.94567
+ Before and After Attack accuracy: 0.00000 0.0
+adv_weight[[ 0.          1.          1.06620121 ...  1.0667392   1.06680524
+   1.06683826]
+ [ 0.          5.          1.01002741 ...  1.04819036  1.0510093
+   1.05237937]
+ [ 1.          0.          1.08827317 ...  1.10641146  1.1093421
+   1.11072028]
+ ...
+ [ 8.          4.          1.14877498 ...  1.14974654  1.14977229
+   1.14974988]
+ [ 8.          2.          1.14883268 ...  1.1497618   1.14978504
+   1.14976597]
+ [ 9.         17.          1.14878201 ...  1.1497196   1.14975655
+   1.14971411]]
+Overall Accuracy Before and After: 0.00000 & 0.00000
+Before Error_k 0.5 & 0.9: 0.32188 & 1.79962
+After Error_k 0.5 & 0.9: 1.79922 & 4.20370
+Before Error_n 0.5 & 0.9: 2.29273 & 4.83721
+After Error_n 0.5 & 0.9: 1.34166 & 5.31497
+
+Process finished with exit code 0

@@ -115,11 +115,7 @@ class T_offine_fcnn_white():
                     alpha = 30.0
                 else:
                     alpha = 0.0001
-                if Epoch%1000==0:
-                    if isinstance(network, torch.nn.DataParallel):
-                        torch.save(network.module,'../online/adv_fcnn_white/adv_white_fcnn_new{0}'.format(Epoch) + '%d-' % k + '%d' % n + '.pth')
-                    else:
-                        torch.save(network, '../online/adv_fcnn_white/adv_white_fcnn_new{0}'.format(Epoch) + '%d-' % k + '%d' % n + '.pth')
+
         if isinstance(network, torch.nn.DataParallel):
             torch.save(network.module, '../online/adv_fcnn_white/adv_white_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
         else:

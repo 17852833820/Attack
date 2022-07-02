@@ -35,7 +35,7 @@ class UT_offine_conv_white():
         self.Adv_weights = np.empty((1, 1 + 52))
         self.Perdiction_b = np.empty((1, 1+500*2))
         self.Perdiction_a = np.empty((1, 1+500*2))
-        self.writer= SummaryWriter('./logs/trainGAN/UT-CNN-white/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
+        self.writer= SummaryWriter('../runtime/logs/trainGAN/UT-CNN-white/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
 
     def setup_seed(self,seed):
         torch.manual_seed(seed)
@@ -60,9 +60,9 @@ class UT_offine_conv_white():
         for data in train_loader:
             _, pos, inputs = data
             loss_temp = 0.0
-            alpha = 1.0
+            alpha = 0.1
             pos, inputs = pos.to(device), inputs.to(device)
-            for Epoch in range(4000):  #
+            for Epoch in range(8000):  #
                 second_loss = []
                 third_loss = []
                 optimizer.zero_grad()
@@ -72,23 +72,28 @@ class UT_offine_conv_white():
                 loss2 = myloss2(output, original_location, d_new)
                 loss3 = myloss3(weights)
                 loss = loss2 + alpha * loss3
+                self.writer.add_scalar('train/loss', loss, Epoch)
+                self.writer.add_scalar('train/loss2', loss2, Epoch)
+                self.writer.add_scalar('train/loss3', loss3, Epoch)
                 loss.backward()
                 optimizer.step()
                 second_loss.append(loss2.cpu())
                 third_loss.append(loss3.cpu())
                 print('[%d][%d] Second loss and third loss:  %.6f & %.6f' %
                       (k, Epoch + 1, max(second_loss), max(third_loss)))
-                if abs(max(
+                '''if abs(max(
                         second_loss) - loss_temp) <= 0.000001 and d_new <= 5 * dmin:  # 控制阈值，使其更加大，以产生更多满足原始阈值的数据，提高准确率
                     d_new = d_new * 1.05
                 if Epoch > 100 and max(second_loss) <= 0.1 and max(
                         third_loss) <= 0.1:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
                     break
-                loss_temp = max(second_loss)
+                loss_temp = max(second_loss)'''
+                if max(second_loss) <= 0.01 and max(third_loss) <= 0.01:
+                    break
                 if max(second_loss) <= 0.1 and max(third_loss) >= 0.1:
                     alpha = 30.0
                 else:
-                    alpha = 1.0
+                    alpha = 0.001
 
         if isinstance(network, torch.nn.DataParallel):
             torch.save(network.module, '../online/adv_conv_white/ut_adv_white_conv' + '%d-' % k + '.pth')
@@ -161,8 +166,8 @@ class UT_offine_conv_white():
         print('Before Error_k 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_k_b[:, 1:251], 0.5), np.quantile(self.Errs_k_b[:, 1:251], 0.9)))
         print('After Error_k 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_k_a[:, 1:251], 0.5), np.quantile(self.Errs_k_a[:, 1:251], 0.9)))
 
-        file_name = '../offline/conv_white/ut_Attack_Results_all_conv_white_new.mat'
+        file_name = '../online/conv_white/ut_Attack_Results_all_conv_white_new.mat'
         savemat(file_name, {'Errors_k_b': self.Errs_k_b, 'Errors_k_a': self.Errs_k_a, 'Accuracy_before': self.Accs_b, 'Accuracy_after': self.Accs_a, 'Adv_weights': self.Adv_weights , 'Perdiction_b': self.Perdiction_b, 'Perdiction_a': self.Perdiction_a})
-'''if __name__ == '__main__':
+if __name__ == '__main__':
     attacker=UT_offine_conv_white()
-    attacker.run()'''
+    attacker.run()
