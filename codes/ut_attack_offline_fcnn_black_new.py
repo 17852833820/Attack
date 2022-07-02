@@ -29,13 +29,13 @@ class UT_offine_fcnn_black():
         self.errors90_all = pickle.load(open("../online/fcnn_white/FCNN_white_meta_error90_info.pkl", 'rb'))
         self.date = 0.15
 
-        self.Errs_k_b = np.empty((1, 1 + 250))
-        self.Errs_k_a = np.empty((1, 1 + 250))
-        self.Accs_b = np.empty((1, 1 + 1))
-        self.Accs_a = np.empty((1, 1 + 1))
-        self.Adv_weights = np.empty((1, 1 + 56))
-        self.Perdiction_b = np.empty((1, 1 + 500))
-        self.Perdiction_a = np.empty((1, 1 + 500))
+        self.Errs_k_b = np.empty((1, 2 + 500))
+        self.Errs_k_a = np.empty((1, 2 + 500))
+        self.Accs_b = np.empty((1, 2 + 1))
+        self.Accs_a = np.empty((1, 2 + 1))
+        self.Adv_weights = np.empty((1, 2 + 52))
+        self.Perdiction_b = np.empty((1, 1 + 500*2))
+        self.Perdiction_a = np.empty((1, 1 + 500*2))
         self.writer= SummaryWriter('../runtime/logs/trainGAN/UT-FCNN-black/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
 
     def setup_seed(self,seed):
@@ -93,9 +93,9 @@ class UT_offine_fcnn_black():
                     alpha = 1.0
 
         if isinstance(network, torch.nn.DataParallel):
-            torch.save(network.module, '../offline/adv_fcnn_black/ut_adv_black_fcnn_new' + '%d-' % k + '.pth')
+            torch.save(network.module, '../online/adv_fcnn_black/ut_adv_black_fcnn_new' + '%d-' % k + '.pth')
         else:
-            torch.save(network, '../offline/adv_fcnn_black/ut_adv_black_fcnn_new' + '%d-' % k + '.pth')
+            torch.save(network, '../online/adv_fcnn_black/ut_adv_black_fcnn_new' + '%d-' % k + '.pth')
         return network
 
 
@@ -137,12 +137,12 @@ class UT_offine_fcnn_black():
         for k in np.arange(self.num_classes):
             data_train = create_dataset('FD40', self.path_train, k)
             data_test = create_dataset('FD40', self.path_test, k)
-            dataloader_train = torch.utils.data.DataLoader(data_train, batch_size=250, shuffle=True)
-            dataloader_test = torch.utils.data.DataLoader(data_test, batch_size=250, shuffle=True)
+            dataloader_train = torch.utils.data.DataLoader(data_train, batch_size=500, shuffle=True)
+            dataloader_test = torch.utils.data.DataLoader(data_test, batch_size=500, shuffle=True)
             d_min = self.errors90_all[k] + 0.3
 
-            network = torch.load('../offline/adv_fcnn_black/ut_adv_black_fcnn_new' + '%d-' % k + '.pth')
-            network = self.Train_adv_network(model_surrogate, network, self.device, dataloader_train, k, d_min, date)
+            #network = torch.load('../online/adv_fcnn_black/ut_adv_black_fcnn_new' + '%d-' % k + '.pth')
+            network = self.Train_adv_network(self.model_surrogate, self.CNN, self.device, dataloader_train, k, d_min, self.date)
             _, err_k_b, err_k_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = self.Test_adv_network(model_victim, network, device, dataloader_test, k, d_min, date)
             self.Errs_k_b = np.append(self.Errs_k_b, np.array([np.concatenate((np.array([k]), err_k_b))]), axis=0)
             self.Errs_k_a = np.append(self.Errs_k_a, np.array([np.concatenate((np.array([k]), err_k_a))]), axis=0)
@@ -163,8 +163,8 @@ class UT_offine_fcnn_black():
         print('After Error_k 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_k_a[:, 1:251], 0.5), np.quantile(self.Errs_k_a[:, 1:251], 0.9)))
 
 
-        file_name = '../offline/conv_white/ut_Attack_Results_all_fcnn_black_new.mat'
+        file_name = '../online/conv_white/ut_Attack_Results_all_fcnn_black_new.mat'
         savemat(file_name, {'Errors_k_b': self.Errs_k_b, 'Errors_k_a': self.Errs_k_a, 'Accuracy_before': self.Accs_b, 'Accuracy_after': self.Accs_a, 'Adv_weights': self.Adv_weights , 'Perdiction_b': self.Perdiction_b, 'Perdiction_a': self.Perdiction_a})
-'''if __name__ == '__main__':
+if __name__ == '__main__':
     attacker=UT_offine_fcnn_black()
-    attacker.run()'''
+    attacker.run()

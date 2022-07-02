@@ -79,7 +79,7 @@ class T_offine_conv_white():
         myloss3 = WeightLoss().to(device)
 
         # optimizer = optim.SGD(network.parameters(), lr=0.5, momentum=0.5)
-        optimizer = optim.Adadelta(network.parameters(), lr=1.0)
+        optimizer = optim.Adadelta(network.parameters(), lr=5.0)
 
         for data in train_loader:
             _, pos, inputs = data
@@ -114,9 +114,9 @@ class T_offine_conv_white():
                 if max(first_loss) <= 0.01 and max(third_loss) <= 0.01:
                     break
                 if max(first_loss) <= 0.1 and max(third_loss) >= 0.1:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
-                    alpha = 5.0
+                    alpha = 30.0
                 else:
-                    alpha = 0.01
+                    alpha = 0.0001
 
         if isinstance(network, torch.nn.DataParallel):
             torch.save(network.module, '../online/adv_conv_white/adv_white_conv' + '%d-' % k + '%d' % n + '.pth')
