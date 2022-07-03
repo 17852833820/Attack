@@ -22,7 +22,7 @@ class FingerprintDataset(Dataset):
     def __getitem__(self, idx):
         features = torch.from_numpy(np.array(self.data.iloc[idx][0:104].values, dtype=np.float)).reshape(1, 2, 52)#.float()
 
-        loc_xy = torch.cat((torch.from_numpy(np.array(self.data.iloc[idx][105:106].values,dtype=float)) / 10.0,torch.from_numpy(np.array(self.data.iloc[idx][106:107].values,dtype=float)) / 10.0),dim=0)
+        loc_xy = torch.cat((torch.from_numpy(np.array(self.data.iloc[idx][105:106].values,dtype=float)) / 10.0,torch.from_numpy(np.array(self.data.iloc[idx][106:107].values,dtype=float)) / 1.0),dim=0)
 
         label = int(self.data.iloc[idx][104])
         return label, loc_xy, features

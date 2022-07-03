@@ -18,11 +18,11 @@ class T_offine_conv_white():
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.path_train = '../datas/Online_B_down_SIMO.csv'
         self.path_test = '../datas/Online_B_up_SIMO.csv'
-        self.model = torch.load('../online/conv_white/ConvCNN_white.pth', map_location=torch.device('cpu'))#DNNA,train first
+        self.model = torch.load('../online_new/conv_white/ConvCNN_white.pth', map_location=torch.device('cpu'))#DNNA,train first
         self.model = torch.nn.DataParallel(self.model, device_ids=[0])
         self.CNN = Generator.Generator()
         self.CNN = self.CNN.to(self.device)#GAN generator
-        self.errors90_all = pickle.load(open("../online/conv_white/ConvCNN_white_meta_error90_info.pkl", 'rb'))
+        self.errors90_all = pickle.load(open("../online_new/conv_white/ConvCNN_white_meta_error90_info.pkl", 'rb'))
         self.date = 0.15
         self.d_max = 0.3
         self.Perdiction_b = np.empty((1, 1 + 500 * 2))
@@ -34,7 +34,7 @@ class T_offine_conv_white():
         self.Accs_b = np.empty((1, 2 + 1))
         self.Accs_a = np.empty((1, 2 + 1))
         self.Adv_weights = np.empty((1, 2 + 52))
-        self.writer= SummaryWriter('../runtime/logs/trainGAN/T-CNN-white/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
+        self.writer= SummaryWriter('../logs/trainGAN/T-CNN-white/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
 
         self.setup_seed(3)
 
@@ -46,29 +46,22 @@ class T_offine_conv_white():
         torch.backends.cudnn.deterministic = True
 
     # search for nearest points outside the circle located at k-th point
-    def pairing(self,k, threshold_k):
+    def pairing(self, k, threshold_k):
         array_k = np.array([])
-        x = k // 5 + 1
-        y = k % 5 + 1
-        for d in np.arange(1, 8):
-            if d * 1.5 >= threshold_k:
-                x_s, y_s = [0, 0, -d, d], [-d, d, 0, 0]
-            elif d * 1.5 * math.sqrt(2) >= threshold_k:
-                x_s, y_s = [d, d, -d, -d], [d, -d, d, -d]
-            else:
-                continue
-            for (xd, yd) in zip(x_s, y_s):
-                x_new, y_new = x + xd, y + yd
-                if 1 <= x_new <= 8 and 1 <= y_new <= 5:
-                    label_new = (x_new - 1) * 5 + y_new - 1
-                    array_k = np.append(array_k, label_new)
-            break
+        x = (k + 1)
+        y = 0
+        for d in np.arange(9, -1, -1):  # d=1,...10
+            d_x = abs(x * 0.6 - (d + 1) * 0.6)
+            d_y = abs(y - 0)
+            if int(d_x * 10) == int(3 * 0.6 * 10) and len(array_k) == 0:
+                array_k = np.append(array_k, d)
+
         return array_k
 
 
     # train adversarial network
     def Train_adv_network(self,model, network, device, train_loader, k, n, dmax, date):
-        target_location = torch.tensor([(n // 5 + 1) / 8.0, (n % 5 + 1) / 5.0]).to(device)
+        target_location = torch.tensor([(n+1) / 10.0, 0.0/1.0]).to(device)
         d_new = dmax-0.2
         model = model.to(device)
         network = network.to(device)
@@ -78,17 +71,18 @@ class T_offine_conv_white():
         myloss1 = MyLoss1().to(device)
         myloss3 = WeightLoss().to(device)
 
-        # optimizer = optim.SGD(network.parameters(), lr=0.5, momentum=0.5)
-        optimizer = optim.Adadelta(network.parameters(), lr=5.0)
+        #optimizer = optim.SGD(network.parameters(), lr=0.5, momentum=0.5)
+        optimizer = optim.Adadelta(network.parameters(), lr=0.1)
 
         for data in train_loader:
             _, pos, inputs = data
             pos, inputs = pos.to(device), inputs.to(device)
             loss_temp = 0.0
             alpha = 0.1
-            for Epoch in range(5000):  #
-                first_loss = []
-                third_loss = []
+            first_loss = []
+            third_loss = []
+            for Epoch in range(8000):  #
+
 
                 optimizer.zero_grad()
                 data_per, weights = network(inputs, date)  # add perturbation
@@ -102,26 +96,31 @@ class T_offine_conv_white():
                 self.writer.add_scalar('train{0}-{1}/loss3'.format(k, n), loss3, Epoch)
                 loss.backward()
                 optimizer.step()
-                first_loss.append(loss1.cpu())
-                third_loss.append(loss3.cpu())
-                print('[%d-%d][%d] First loss & Third loss: %.6f & %.6f' %
-                      (k, n, Epoch + 1, max(first_loss), max(third_loss)))
+                first_loss.append(loss1.cpu().item())
+                third_loss.append(loss3.cpu().item())
+                print('[%d-%d][%d] First loss & Third loss: %.6f & %.6f alpha %6f' %
+                      (k, n, Epoch + 1, loss1, loss3, alpha))
                 '''if abs(max(first_loss) - loss_temp) <= 0.00001 and d_new >= dmax / 5.0:  # 控制阈值，使其更加小，以产生更多满足原始阈值的数据，提高准确率
                     d_new = d_new / 1.05
                 if Epoch > 100 and max(first_loss) <= 0.1 and max(third_loss) <= 0.1:  #
                     break
                 loss_temp = max(first_loss)'''
-                if max(first_loss) <= 0.01 and max(third_loss) <= 0.01:
+                if loss1 <= 0.01 and loss3 <= 0.01:
                     break
-                if max(first_loss) <= 0.1 and max(third_loss) >= 0.1:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
+                if loss1 <= 0.1 and loss3 >= 0.1:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
                     alpha = 30.0
                 else:
-                    alpha = 0.0001
+                    alpha = 0.001
+                if Epoch == 4000:
+                    mean_first = np.mean(first_loss)
+                    std_first = np.std(first_loss)
+                if Epoch == 6000 and mean_first - 2 * std_first <= loss1.cpu() <= mean_first + 2 * std_first:
+                    alpha = 200.0
 
         if isinstance(network, torch.nn.DataParallel):
-            torch.save(network.module, '../online/adv_conv_white/adv_white_conv' + '%d-' % k + '%d' % n + '.pth')
+            torch.save(network.module, '../online_new/adv_conv_white/adv_white_conv' + '%d-' % k + '%d' % n + '.pth')
         else:
-            torch.save(network, '../online/adv_conv_white/adv_white_conv' + '%d-' % k + '%d' % n + '.pth')
+            torch.save(network, '../online_new/adv_conv_white/adv_white_conv' + '%d-' % k + '%d' % n + '.pth')
         return network
 
 
@@ -132,7 +131,7 @@ class T_offine_conv_white():
         err_n_a = np.array([])  # localization errors to targeted location after perturbation
         loc_prediction_b = np.array([])
         loc_prediction_a = np.array([])
-        target_location = torch.tensor([n * 0.6, 0.6]).to(device)
+        target_location = torch.tensor([(n+1) * 0.6, 0.0]).to(device)#target location modify
         model = model.to(device)
         network = network.to(device)
         with torch.no_grad():
@@ -180,8 +179,12 @@ class T_offine_conv_white():
             threshold_k = self.errors90_all[k] + self.d_max
             list_k = self.pairing(k, threshold_k)
             for n in list_k:
+                t1 = time.time()
+
                 # network = torch.load('../offline/adv_conv_white/adv_white_conv' + '%d-' % k + '%d' % n + '.pth')
                 network = self.Train_adv_network(self.model, self.CNN, self.device, dataloader_train, k, n, self.d_max, self.date)
+                t2 = time.time()
+                print("time{0}".format(t2-t1))
                 _, _, err_k_b, err_k_a, err_n_b, err_n_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = self.Test_adv_network(
                     self.model, network, self.device, dataloader_test, k, n, self.d_max, self.date)
                 self.Errs_k_b = np.append(self.Errs_k_b, np.array([np.concatenate((np.array([k, n]), err_k_b))]), axis=0)
@@ -214,7 +217,7 @@ class T_offine_conv_white():
         print('Before Error_n 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_n_b[:, 2:252], 0.5), np.quantile(self.Errs_n_b[:, 2:252], 0.9)))
         print('After Error_n 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_n_a[:, 2:252], 0.5), np.quantile(self.Errs_n_a[:, 2:252], 0.9)))
 
-        file_name = '../online/conv_white/Attack_Results_all_conv_white_new.mat'
+        file_name = '../online_new/conv_white/Attack_Results_all_conv_white_new.mat'
         savemat(file_name, {'Errors_k_b': self.Errs_k_b, 'Errors_n_b': self.Errs_n_b, 'Errors_k_a': self.Errs_k_a, 'Errors_n_a': self.Errs_n_a, 'Accuracy_before': self.Accs_b, 'Accuracy_after': self.Accs_a, 'Adv_weights': self.Adv_weights,'Prediction_b':self.Prediction_b,"Prediction_a":self.Prediction_a})
 if __name__ == '__main__':
     attacker=T_offine_conv_white()

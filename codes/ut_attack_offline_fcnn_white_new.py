@@ -93,12 +93,7 @@ class UT_offine_fcnn_white():
                     alpha = 10.0
                 else:
                     alpha = 0.001
-                '''if Epoch%1000==0:
-                    if isinstance(network, torch.nn.DataParallel):
-                        torch.save(network.module,
-                                   '../online/adv_fcnn_white/ut_adv_white_fcnn_new-{0}'.format(Epoch) + '%d-' % k + '.pth')
-                    else:
-                        torch.save(network, '../online/adv_fcnn_white/ut_adv_white_fcnn_new-{0}'.format(Epoch) + '%d-' % k + '.pth')'''
+
         if isinstance(network, torch.nn.DataParallel):
             torch.save(network.module, '../online/adv_fcnn_white/ut_adv_white_fcnn_newlr=2.5' + '%d-' % k + '.pth')
         else:
@@ -119,9 +114,9 @@ class UT_offine_fcnn_white():
                 output = model(data_per)   #perturbed results
                 predict = model(inputs)   #genuine results
 
-                output[:, 0], output[:, 1] = output[:, 0]*8.0*1.5, output[:, 1]*5.0*1.5
-                pos[:, 0], pos[:, 1] = pos[:, 0]*8.0*1.5, pos[:, 1]*5.0*1.5
-                predict[:, 0], predict[:, 1] = predict[:, 0]*8.0*1.5, predict[:, 1]*5.0*1.5
+                output[:, 0], output[:, 1] = output[:, 0] * 10.0 * 0.6, output[:, 1] * 1.0 * 0.6
+                pos[:, 0], pos[:, 1] = pos[:, 0] * 10.0 * 0.6, pos[:, 1] * 1.0 * 0.6
+                predict[:, 0], predict[:, 1] = predict[:, 0] * 10.0 * 0.6, predict[:, 1] * 1.0 * 0.6
 
                 temp_k_b = F.pairwise_distance(predict, pos, p=2)  # localization errors
                 temp_k_a = F.pairwise_distance(output, pos, p=2)

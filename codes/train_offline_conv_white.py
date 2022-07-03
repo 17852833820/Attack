@@ -14,13 +14,13 @@ from tensorboardX import SummaryWriter
 class DNN_offine_conv_white():
     def __init__(self):
         self.setup_seed(2)
-        self.Num_classes = 40
-        self.Num_epochs = 100  # number of training epochs
-        self.network = ConvCNN40.ConvCNN40()
-        self.network = self.network.double()
-        self.network = torch.load('../online/conv_white/ConvCNN_white200.pth')#DNNA pre-trained
+        self.Num_classes = 10
+        self.Num_epochs = 400  # number of training epochs
+        #self.network = ConvCNN40.ConvCNN40()
+        #self.network = self.network.double()
+        self.network = torch.load('../online_new/conv_white/ConvCNN_white.pth')#DNNA pre-trained
         #self.writer= SummaryWriter('./logs/trainDNN/CNN/white/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
-        self.writer= SummaryWriter('./logs/trainDNN/CNN/white/2022-07-01-16-38-07/tensorboard2')
+        self.writer= SummaryWriter('../logs/trainDNN/CNN/white/2022-07-01-16-38-07/tensorboard')
         self.path_train = '../datas/Online_A_up_SIMO.csv'
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # fix random seeds
@@ -38,15 +38,13 @@ class DNN_offine_conv_white():
     def Train_loc(self,model, dataloader_train, device, num_epochs=200):
         criterion = nn.MSELoss() #loss
         # criterion = nn.HuberLoss()
-        # optimizer = optim.SGD(model.parameters(), lr=0.025, momentum=0.7)
-        # optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.7)
-        optimizer = optim.Adadelta(model.parameters(), lr=0.01)
+        optimizer = optim.SGD(model.parameters(), lr=0.025, momentum=0.7)
+        #optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.7)
+        #optimizer = optim.Adadelta(model.parameters(), lr=0.01)
         model = model.to(device)
         for Epoch in range(num_epochs):
             running_loss = 0.0
             for data in dataloader_train:
-
-                
                 _, pos, inputs = data  # loc_xy, features
                 pos, inputs = pos.to(device), inputs.to(device)
 
@@ -61,14 +59,14 @@ class DNN_offine_conv_white():
             print('[%d] loss: %.6f' % (Epoch + 1, running_loss))
             if Epoch%50==0:
                 if isinstance(model, torch.nn.DataParallel):
-                    torch.save(model.module, '../online/conv_white/ConvCNN_white{0}.pth'.format(Epoch))
+                    torch.save(model.module, '../online_new/conv_white/ConvCNN_white{0}.pth'.format(Epoch))
                 else:
-                    torch.save(model, '../online/conv_white/ConvCNN_white{0}.pth'.format(Epoch))
+                    torch.save(model, '../online_new/conv_white/ConvCNN_white{0}.pth'.format(Epoch))
         print('Finished Training')
         if isinstance(model, torch.nn.DataParallel):
-            torch.save(model.module, '../online/conv_white/ConvCNN_white.pth')
+            torch.save(model.module, '../online_new/conv_white/ConvCNN_white.pth')
         else:
-            torch.save(model, '../online/conv_white/ConvCNN_white.pth')
+            torch.save(model, '../online_new/conv_white/ConvCNN_white.pth')
 
 
     # test localization model
@@ -78,7 +76,7 @@ class DNN_offine_conv_white():
         model = model.to(device)
         for k in range(Num_classes):
             dataset = create_dataset('FD40', testdatapath, k)
-            dataloader = torch.utils.data.DataLoader(dataset, batch_size=250, shuffle=False, num_workers=0, pin_memory=True)
+            dataloader = torch.utils.data.DataLoader(dataset, batch_size=500, shuffle=False, num_workers=0, pin_memory=True)
             errs_k = np.array([])  # localization errors of k-th position
             with torch.no_grad():
                 for data in dataloader:
@@ -86,8 +84,8 @@ class DNN_offine_conv_white():
                     loc_gt, in_feats = loc_gt.to(device), in_feats.to(device)
 
                     loc_pred = model(in_feats)
-                    loc_pred[:, 0], loc_pred[:, 1] = loc_pred[:, 0]*8.0*1.5, loc_pred[:, 1]*5.0*1.5
-                    loc_gt[:, 0], loc_gt[:, 1] = loc_gt[:, 0]*8.0*1.5, loc_gt[:, 1]*5.0*1.5
+                    loc_pred[:, 0], loc_pred[:, 1] = loc_pred[:, 0]*10.0*0.6, loc_pred[:, 1]*1.0*0.6
+                    loc_gt[:, 0], loc_gt[:, 1] = loc_gt[:, 0]*10.0*0.6, loc_gt[:, 1]*1.0*0.6
                     temp = F.pairwise_distance(loc_pred, loc_gt, p=2)
                     errs_k = np.append(errs_k, temp.cpu())
             if len(errs_k)==0:continue
@@ -95,8 +93,8 @@ class DNN_offine_conv_white():
             errs_90_all = np.append(errs_90_all, np.quantile(errs_k, 0.9))
             print('[%d] 0.5 & 0.9 errors: %.5f & %.5f'% (k, np.quantile(errs_k, 0.5),  np.quantile(errs_k, 0.9)))
 
-        pickle.dump(errs_all, open("../online/conv_white/ConvCNN_white_meta_error_all_info.pkl", "wb"))
-        pickle.dump(errs_90_all, open("../online/conv_white/ConvCNN_white_meta_error90_info.pkl", "wb"))
+        pickle.dump(errs_all, open("../online_new/conv_white/ConvCNN_white_meta_error_all_info.pkl", "wb"))
+        pickle.dump(errs_90_all, open("../online_new/conv_white/ConvCNN_white_meta_error90_info.pkl", "wb"))
         print('[Total] 0.5 & 0.9 errors: %.5f & %.5f' % (np.quantile(errs_all, 0.5), np.quantile(errs_all, 0.9)))
 
 
@@ -105,9 +103,9 @@ class DNN_offine_conv_white():
         network = torch.nn.DataParallel(self.network, device_ids=[0])
         data_train = create_dataset('FD40', self.path_train, "train")
         dataloader_train = torch.utils.data.DataLoader(data_train, batch_size=128, shuffle=True, num_workers=0, pin_memory=True)
-        #self.Train_loc(network, dataloader_train, self.device, self.Num_epochs)
+        self.Train_loc(network, dataloader_train, self.device, self.Num_epochs)
 
-        model = torch.load('../online/conv_white/ConvCNN_white.pth')
+        model = torch.load('../online_new/conv_white/ConvCNN_white.pth')
         model = model.double()
         path_test = '../datas/Online_B_up_SIMO.csv'
         self.Test_loc(model, self.device, path_test, self.Num_classes)
@@ -115,6 +113,6 @@ class DNN_offine_conv_white():
         time_end = time.time()
         time_cost = time_end - time_start
         print('Time cost', time_cost, 's')
-'''if __name__ == '__main__':
+if __name__ == '__main__':
     location=DNN_offine_conv_white()
-    location.run()'''
+    location.run()
