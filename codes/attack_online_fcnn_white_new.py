@@ -102,7 +102,7 @@ class T_offine_fcnn_white():
                     break
                 loss_temp = max(first_loss)'''
                 if loss1 <= 0.01 and loss3 <= 0.01:
-                    break
+                    continue
                 if loss1 <= 0.1 and loss3 >= 0.05:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
                     alpha = 200.0
                 elif loss1<=0.2 and loss3>=0.1:

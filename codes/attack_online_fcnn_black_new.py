@@ -112,7 +112,7 @@ class T_offine_fcnn_white():
                 elif loss1<=0.2 and loss3>=0.1:
                     alpha=50.0
                 else:
-                    alpha = 0.1
+                    alpha = 0.0001
                 if Epoch==2000:
                     mean_first=np.mean(first_loss)
                     std_first=np.std(first_loss)

@@ -107,7 +107,7 @@ class T_offine_fcnn_white():
                 loss_temp = max(first_loss)'''
                 if loss1 <= 0.01 and loss3 <= 0.01:
                     break
-                if loss1 <= 0.1 and loss3 >= 0.1:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
+                if loss1 <= 0.1 and loss3 >= 0.05:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
                     alpha = 100.0
                 elif loss1<=0.2 and loss3>=0.1:
                     alpha=50.0
@@ -119,10 +119,10 @@ class T_offine_fcnn_white():
                 if Epoch ==4000 and mean_first-2*std_first<=loss1.cpu()<=mean_first+2*std_first:
                     alpha=100.0
 
-        '''if isinstance(network, torch.nn.DataParallel):
+        if isinstance(network, torch.nn.DataParallel):
             torch.save(network.module, '../online_new/adv_conv_balck/adv_balck_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
         else:
-            torch.save(network, '../online_new/adv_conv_balck/adv_balck_fcnn_new' + '%d-' % k + '%d' % n + '.pth')'''
+            torch.save(network, '../online_new/adv_conv_balck/adv_balck_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
         return network
 
 
@@ -194,7 +194,7 @@ class T_offine_fcnn_white():
                     if final_acc_a1 >=0.98 and smoothness1 <0.1:
                         pass
                     else:
-                        network = self.Train_adv_network(self.model_surrogate, self.CNN, self.device, dataloader_train, k,n, self.d_max,self.date)
+                        network = self.Train_adv_network(self.model_surrogate, self.CNN, self.device, dataloader_train, k,n, self.d_max,self.date,d_new)
                         _, _, err_k_b2, err_k_a2, err_n_b2, err_n_a2, final_acc_b2, final_acc_a2, adv_weight2, loc_prediction_b2, loc_prediction_a2 = self.Test_adv_network(
                             self.model_victim, network, self.device, dataloader_test, k, n, self.d_max, self.date)
                         smoothness2 = torch.norm(torch.diff(adv_weight2), p=2)

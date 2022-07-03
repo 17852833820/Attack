@@ -10,8 +10,8 @@ class MyLoss1(nn.Module):
         pos = torch.kron(torch.ones(pred.size()[0], 1).to(self.device), pos.view(1, 2))
         pred_t = torch.ones_like(pred)
         pos_t = torch.ones_like(pos)
-        pred_t[:, 0], pred_t[:, 1] = pred[:, 0] * 8.0 * 1.5, pred[:, 1] * 5.0 * 1.5
-        pos_t[:, 0], pos_t[:, 1] = pos[:, 0] * 8.0 * 1.5, pos[:, 1] * 5.0 * 1.5
+        pred_t[:, 0], pred_t[:, 1] = pred[:, 0] * 10.0 * 0.6, pred[:, 1] * 1.0 * 0.6
+        pos_t[:, 0], pos_t[:, 1] = pos[:, 0] * 10.0 * 0.6, pos[:, 1] * 1.0 * 0.6
         temp = F.pairwise_distance(pred_t, pos_t, p=2)
         n = nn.ReLU()(temp - dmax)
         return torch.sum(n) / (torch.count_nonzero(n) + 0.01)
@@ -30,8 +30,8 @@ class MyLoss2(nn.Module):
         pos = torch.kron(torch.ones(pred.size()[0], 1).to(self.device), pos.view(1, 2))
         pred_t = torch.ones_like(pred)
         pos_t = torch.ones_like(pos)
-        pred_t[:, 0], pred_t[:, 1] = pred[:, 0] * 8.0 * 1.5, pred[:, 1] * 5.0 * 1.5
-        pos_t[:, 0], pos_t[:, 1] = pos[:, 0] * 8.0 * 1.5, pos[:, 1] * 5.0 * 1.5
+        pred_t[:, 0], pred_t[:, 1] = pred[:, 0] * 10.0 * 0.6, pred[:, 1] * 1.0 * 0.6
+        pos_t[:, 0], pos_t[:, 1] = pos[:, 0] * 10.0 * 0.6, pos[:, 1] * 1.0 * 0.6
         temp = F.pairwise_distance(pred_t, pos_t, p=2)
         n = nn.ReLU()(dmin - temp)
         return torch.sum(n) / (torch.count_nonzero(n) + 0.01)
