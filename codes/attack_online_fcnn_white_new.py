@@ -105,8 +105,10 @@ class T_offine_fcnn_white():
                     break
                 if loss1 <= 0.1 and loss3 >= 0.05:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
                     alpha = 200.0
+                elif loss1<=0.2 and loss3>=0.1:
+                    alpha=100.0
                 else:
-                    alpha = 0.0001
+                    alpha = 0.001
                 if Epoch==6000:
                     mean_first=np.mean(first_loss)
                     std_first=np.std(first_loss)
@@ -206,7 +208,7 @@ class T_offine_fcnn_white():
         print('Before Error_n 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_n_b[:, 2:252], 0.5), np.quantile(self.Errs_n_b[:, 2:252], 0.9)))
         print('After Error_n 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_n_a[:, 2:252], 0.5), np.quantile(self.Errs_n_a[:, 2:252], 0.9)))
 
-        file_name = '../online_new/fcnn_white/Attack_Results_all_fcnn_white_new1.mat'
+        file_name = '../online_new/fcnn_white/Attack_Results_all_fcnn_white_new.mat'
         savemat(file_name, {'Errors_k_b': self.Errs_k_b, 'Errors_n_b': self.Errs_n_b, 'Errors_k_a': self.Errs_k_a, 'Errors_n_a': self.Errs_n_a, 'Accuracy_before': self.Accs_b, 'Accuracy_after': self.Accs_a, 'Adv_weights': self.Adv_weights,'Prediction_b':self.Prediction_b,"Prediction_a":self.Prediction_a})
 if __name__ == '__main__':
     attacker=T_offine_fcnn_white()

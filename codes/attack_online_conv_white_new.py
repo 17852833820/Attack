@@ -109,8 +109,10 @@ class T_offine_conv_white():
                     break
                 if loss1 <= 0.1 and loss3 >= 0.05:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
                     alpha = 100.0
+                elif loss1<=0.2 and loss3>=0.1:
+                    alpha=50.0
                 else:
-                    alpha = 0.0001
+                    alpha = 0.001
                 if Epoch == 4000:
                     mean_first = np.mean(first_loss)
                     std_first = np.std(first_loss)
