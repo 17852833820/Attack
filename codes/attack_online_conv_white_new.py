@@ -107,14 +107,14 @@ class T_offine_conv_white():
                 loss_temp = max(first_loss)'''
                 if loss1 <= 0.01 and loss3 <= 0.01:
                     break
-                if loss1 <= 0.1 and loss3 >= 0.1:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
-                    alpha = 30.0
+                if loss1 <= 0.1 and loss3 >= 0.05:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
+                    alpha = 100.0
                 else:
-                    alpha = 0.001
+                    alpha = 0.0001
                 if Epoch == 4000:
                     mean_first = np.mean(first_loss)
                     std_first = np.std(first_loss)
-                if Epoch == 6000 and mean_first - 2 * std_first <= loss1.cpu() <= mean_first + 2 * std_first:
+                if Epoch == 5000 and mean_first - 2 * std_first <= loss1.cpu() <= mean_first + 2 * std_first:
                     alpha = 200.0
 
         if isinstance(network, torch.nn.DataParallel):
