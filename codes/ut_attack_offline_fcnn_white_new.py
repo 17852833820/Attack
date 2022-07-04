@@ -98,7 +98,7 @@ class UT_offine_fcnn_white():
                 if Epoch==1000:
                     mean_first=np.mean(second_loss)
                     std_first=np.std(second_loss)
-                if Epoch ==1500 and mean_first-2*std_first<=loss2.cpu()<=mean_first+2*std_first:
+                if Epoch ==1500 and mean_first-2*std_first<=loss1.cpu()<=mean_first+2*std_first:
                     alpha=200.0
 
         if isinstance(network, torch.nn.DataParallel):

@@ -107,7 +107,7 @@ class T_offine_fcnn_white():
                 loss_temp = max(first_loss)'''
                 if loss1 <= 0.01 and loss3 <= 0.01:
                     break
-                if loss1 <= 0.1 and loss3 >= 0.05:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
+                if loss1 <= 0.01 and loss3 >= 0.05:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
                     alpha = 100.0
                 elif loss1<=0.2 and loss3>=0.1:
                     alpha=50.0
@@ -120,9 +120,9 @@ class T_offine_fcnn_white():
                     alpha=100.0
 
         if isinstance(network, torch.nn.DataParallel):
-            torch.save(network.module, '../online_new/adv_conv_black/adv_black_conv_new' + '%d-' % k + '%d' % n + '.pth')
+            torch.save(network.module, '../online_new/adv_conv_black/adv_black_conv_new7.4-' + '%d-' % k + '%d' % n + '.pth')
         else:
-            torch.save(network, '../online_new/adv_conv_black/adv_black_conv_new' + '%d-' % k + '%d' % n + '.pth')
+            torch.save(network, '../online_new/adv_conv_black/adv_black_conv_new7.4-' + '%d-' % k + '%d' % n + '.pth')
         return network
 
 
@@ -203,7 +203,7 @@ class T_offine_fcnn_white():
                         if final_acc_a2 >=final_acc_a1-0.005 and smoothness2<smoothness1:
                             err_k_b, err_k_a, err_n_b, err_n_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = err_k_b2, err_k_a2, err_n_b2, err_n_a2, final_acc_b2, final_acc_a2, adv_weight2, loc_prediction_b2, loc_prediction_a2
                             print("sucessful")
-                            torch.save(network,'../online_new/adv_conv_black/adv_balck_conv_new' + '%d-' % k + '%d' % n + '.pth')
+                            torch.save(network,'../online_new/adv_conv_black/adv_balck_conv_new7.4-' + '%d-' % k + '%d' % n + '.pth')
                 self.Errs_k_b = np.append(self.Errs_k_b, np.array([np.concatenate((np.array([k, n]), err_k_b))]),axis=0)
                 self.Errs_n_b = np.append(self.Errs_n_b, np.array([np.concatenate((np.array([k, n]), err_n_b))]),axis=0)
                 self.Errs_k_a = np.append(self.Errs_k_a, np.array([np.concatenate((np.array([k, n]), err_k_a))]),axis=0)
@@ -231,7 +231,7 @@ class T_offine_fcnn_white():
         print('Before Error_n 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_n_b[:, 2:252], 0.5), np.quantile(self.Errs_n_b[:, 2:252], 0.9)))
         print('After Error_n 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_n_a[:, 2:252], 0.5), np.quantile(self.Errs_n_a[:, 2:252], 0.9)))
 
-        file_name = '../online_new/conv_black/Attack_Results_all_conv_black_new.mat'
+        file_name = '../online_new/conv_black/Attack_Results_all_conv_black_new7.4-.mat'
         savemat(file_name, {'Errors_k_b': self.Errs_k_b, 'Errors_n_b': self.Errs_n_b, 'Errors_k_a': self.Errs_k_a, 'Errors_n_a': self.Errs_n_a, 'Accuracy_before': self.Accs_b, 'Accuracy_after': self.Accs_a, 'Adv_weights': self.Adv_weights,'Prediction_b':self.Prediction_b,"Prediction_a":self.Prediction_a})
 if __name__ == '__main__':
     attacker=T_offine_fcnn_white()
