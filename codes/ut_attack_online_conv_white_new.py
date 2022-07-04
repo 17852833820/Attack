@@ -47,7 +47,7 @@ class UT_offine_conv_white():
     # train adversarial network
     def Train_adv_network(self,model, network, device, train_loader, k, dmin, date):
         original_location = torch.tensor([(k  + 1)/10.0, (k  + 1)/1.0]).to(device)
-        d_new = 10*dmin
+        d_new = 22*dmin
         model = model.to(device)
         network = network.to(device)
         for param_model in model.parameters():  # fix parameters of loc model
@@ -55,8 +55,8 @@ class UT_offine_conv_white():
 
         myloss2 = MyLoss2().to(device)
         myloss3 = WeightLoss().to(device)
-        # optimizer = optim.SGD(network.parameters(), lr=0.5, momentum=0.5)
-        optimizer = optim.Adadelta(network.parameters(), lr=0.5)
+        #optimizer = optim.SGD(network.parameters(), lr=3.5, momentum=0.5)
+        optimizer = optim.Adadelta(network.parameters(), lr=75.5)
         for data in train_loader:
             _, pos, inputs = data
             loss_temp = 0.0
@@ -64,7 +64,7 @@ class UT_offine_conv_white():
             pos, inputs = pos.to(device), inputs.to(device)
             second_loss = []
             third_loss = []
-            for Epoch in range(2000):  #
+            for Epoch in range(500):  #
                 optimizer.zero_grad()
                 data_per, weights = network(inputs, date)  # add perturbation
                 output = model(data_per)  # location predicts
@@ -94,15 +94,15 @@ class UT_offine_conv_white():
 
                 if loss2 <= 0.05 and loss3 >= 0.05:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
                     alpha = 200.0
-                elif loss2<= 0.2 and loss3 >= 0.1:
+                elif loss2<= 0.1 and loss3 >= 0.1:
                     alpha = 100.0
                 else:
-                    alpha = 0.001
-                if Epoch == 1000:
+                    alpha = 0.00001
+                '''if Epoch == 3000:
                     mean_first = np.mean(second_loss)
                     std_first = np.std(second_loss)
-                if Epoch == 1500 and mean_first - 2 * std_first <= loss2.cpu() <= mean_first + 2 * std_first:
-                    alpha = 200.0
+                if Epoch == 3500 and mean_first - 2 * std_first <= loss2.cpu() <= mean_first + 2 * std_first:
+                    alpha = 200.0'''
 
         if isinstance(network, torch.nn.DataParallel):
             torch.save(network.module, '../online_new/adv_conv_white/ut_adv_white_conv' + '%d-' % k + '.pth')
@@ -149,7 +149,7 @@ class UT_offine_conv_white():
             dataloader_train = torch.utils.data.DataLoader(data_train, batch_size=500, shuffle=True)
             dataloader_test = torch.utils.data.DataLoader(data_test, batch_size=500, shuffle=False)
             d_min = self.errors90_all[k] + 0.3
-            if k<5:
+            if k<10:
                 network = torch.load('../online_new/adv_conv_white/ut_adv_white_conv' + '%d-' % k + '.pth')
             else:
                 network = self.Train_adv_network(self.model, self.CNN, self.device, dataloader_train, k, d_min, self.date)

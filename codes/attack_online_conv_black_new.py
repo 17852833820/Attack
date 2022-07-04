@@ -73,7 +73,7 @@ class T_offine_fcnn_white():
         myloss1 = MyLoss1().to(device)
         myloss3 = WeightLoss().to(device)
 
-        # optimizer = optim.SGD(network.parameters(), lr=0.5, momentum=0.5)
+        #optimizer = optim.SGD(network.parameters(), lr=0.1, momentum=0.5)
         optimizer = optim.Adadelta(network.parameters(), lr=1.0)
 
         for data in train_loader:
@@ -83,7 +83,7 @@ class T_offine_fcnn_white():
             alpha = 0.1
             first_loss = []
             third_loss = []
-            for Epoch in range(8000):  #
+            for Epoch in range(2000):  #
                 optimizer.zero_grad()
                 data_per, weights = network(inputs, date)  # add perturbation
                 output = model(data_per)  # location predicts
@@ -108,9 +108,9 @@ class T_offine_fcnn_white():
                 if loss1 <= 0.01 and loss3 <= 0.01:
                     break
                 if loss1 <= 0.01 and loss3 >= 0.05:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
-                    alpha = 100.0
-                elif loss1<=0.2 and loss3>=0.1:
-                    alpha=50.0
+                    alpha = 200.0
+                elif loss1<=0.1 and loss3>=0.1:
+                    alpha=100.0
                 else:
                     alpha = 0.001
                 if Epoch==2000:
@@ -181,14 +181,14 @@ class T_offine_fcnn_white():
             threshold_k = self.errors90_all[k] + self.d_max
             list_k = self.pairing(k, threshold_k)
             for n in list_k:
-                if k< 1:
+                if k< 2:
                     network = torch.load('../online_new/adv_conv_black/adv_black_conv_new7.4-' + '%d-' % k + '%d' % n + '.pth')
                     _, _, err_k_b, err_k_a, err_n_b, err_n_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = self.Test_adv_network(
                         self.model_victim, network, self.device, dataloader_test, k, n, self.d_max, self.date)
                     smoothness= torch.norm(torch.diff(adv_weight), p=2)
                     print("Acc.: %3f & Smoothness: %3f " % (final_acc_a, smoothness))
                 else:
-                    d_new=0.3
+                    d_new=0.1
                     print("【%d-%d】【%3f】"%(k,n,d_new))
                     #network = torch.load('../online_new/adv_fcnn_balck/adv_balck_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
                     network = self.Train_adv_network(self.model_surrogate, self.CNN, self.device, dataloader_train, k, n, self.d_max,
@@ -198,7 +198,7 @@ class T_offine_fcnn_white():
                     smoothness1=torch.norm(torch.diff(adv_weight1),p=2)
                     print("Acc.: %3f & Smoothness: %3f "% (final_acc_a1,smoothness1))
                     err_k_b, err_k_a, err_n_b, err_n_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = err_k_b1, err_k_a1, err_n_b1, err_n_a1, final_acc_b1, final_acc_a1, adv_weight1, loc_prediction_b1, loc_prediction_a1
-                    for d_new in np.arange(0.25,0.05,-0.05):
+                    '''for d_new in np.arange(0.4,0.05,-0.05):
                         if final_acc_a1 >=0.98 and smoothness1.item() <0.1:
                             break
                         else:
@@ -211,7 +211,7 @@ class T_offine_fcnn_white():
                                 err_k_b, err_k_a, err_n_b, err_n_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = err_k_b2, err_k_a2, err_n_b2, err_n_a2, final_acc_b2, final_acc_a2, adv_weight2, loc_prediction_b2, loc_prediction_a2
                                 print("sucessful")
                                 torch.save(network,'../online_new/adv_conv_black/adv_black_conv_new7.4-' + '%d-' % k + '%d' % n + '.pth')
-
+'''
 
                 self.Errs_k_b = np.append(self.Errs_k_b, np.array([np.concatenate((np.array([k, n]), err_k_b))]),axis=0)
                 self.Errs_n_b = np.append(self.Errs_n_b, np.array([np.concatenate((np.array([k, n]), err_n_b))]),axis=0)
