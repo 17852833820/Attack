@@ -47,7 +47,7 @@ class UT_offine_conv_white():
     # train adversarial network
     def Train_adv_network(self,model, network, device, train_loader, k, dmin, date):
         original_location = torch.tensor([(k  + 1)/10.0, (k  + 1)/1.0]).to(device)
-        d_new = 5*dmin
+        d_new = 10*dmin
         model = model.to(device)
         network = network.to(device)
         for param_model in model.parameters():  # fix parameters of loc model
@@ -94,7 +94,7 @@ class UT_offine_conv_white():
 
                 if loss2 <= 0.05 and loss3 >= 0.05:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
                     alpha = 200.0
-                elif loss3 <= 0.2 and loss3 >= 0.1:
+                elif loss2<= 0.2 and loss3 >= 0.1:
                     alpha = 100.0
                 else:
                     alpha = 0.001
@@ -149,9 +149,10 @@ class UT_offine_conv_white():
             dataloader_train = torch.utils.data.DataLoader(data_train, batch_size=500, shuffle=True)
             dataloader_test = torch.utils.data.DataLoader(data_test, batch_size=500, shuffle=False)
             d_min = self.errors90_all[k] + 0.3
-
-            # network = torch.load('../online/adv_conv_white/ut_adv_white_conv' + '%d-' % k + '.pth')
-            network = self.Train_adv_network(self.model, self.CNN, self.device, dataloader_train, k, d_min, self.date)
+            if k<5:
+                network = torch.load('../online_new/adv_conv_white/ut_adv_white_conv' + '%d-' % k + '.pth')
+            else:
+                network = self.Train_adv_network(self.model, self.CNN, self.device, dataloader_train, k, d_min, self.date)
             _, err_k_b, err_k_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = self.Test_adv_network(
                 self.model, network, self.device, dataloader_test, k, d_min, self.date)
             self.Errs_k_b = np.append(self.Errs_k_b, np.array([np.concatenate((np.array([k]), err_k_b))]), axis=0)
