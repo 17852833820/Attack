@@ -47,7 +47,7 @@ class UT_offine_fcnn_white():
     # train adversarial network
     def Train_adv_network(self,model, network, device, train_loader, k, dmin, date):
         original_location = torch.tensor([(k  + 1)/10.0, (k  + 1)/1.0]).to(device)
-        d_new = 1.6*dmin
+        d_new = 1.5*dmin
         model = model.to(device)
         network = network.to(device)
         for param_model in model.parameters():  # fix parameters of loc model
@@ -55,7 +55,7 @@ class UT_offine_fcnn_white():
 
         myloss1 = MyLoss2().to(device)
         myloss2 = WeightLoss().to(device)
-        optimizer = optim.SGD(network.parameters(), lr=100.1, momentum=0.5)
+        optimizer = optim.SGD(network.parameters(), lr=0.8, momentum=0.1)
         #optimizer = optim.Adadelta(network.parameters(), lr=100.0)
         for data in train_loader:
             _, pos, inputs = data
@@ -64,7 +64,7 @@ class UT_offine_fcnn_white():
             alpha = 0.1
             second_loss = []
             third_loss = []
-            for Epoch in range(5000):  #
+            for Epoch in range(10000):  #
 
                 optimizer.zero_grad()
                 data_per, weights = network(inputs, date)  # add perturbation
@@ -91,10 +91,10 @@ class UT_offine_fcnn_white():
 
                 if loss1 <= 0.01 and loss2 >= 0.05:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
                     alpha = 200.0
-                elif loss1 <= 0.5 and loss2 >= 0.1:
+                elif loss1 <=0.15 and loss2 >= 0.1:
                     alpha = 100.0
                 else:
-                    alpha = 0.001
+                    alpha = 0.00001
                 if Epoch==1000:
                     mean_first=np.mean(second_loss)
                     std_first=np.std(second_loss)
@@ -148,8 +148,9 @@ class UT_offine_fcnn_white():
             dataloader_train = torch.utils.data.DataLoader(data_train, batch_size=500, shuffle=True)
             dataloader_test = torch.utils.data.DataLoader(data_test, batch_size=500, shuffle=False)
             d_min = self.errors90_all[k] + 0.3
-            if   k==7 or k==9:
-                network = self.Train_adv_network(self.model, self.CNN, self.device, dataloader_train, k, d_min, self.date)
+            if  k==7:
+                network = torch.load('../online_new/adv_fcnn_white/ut_adv_white_fcnn_newlr=2.5' + '%d-' % k + '.pth')
+                network = self.Train_adv_network(self.model, network, self.device, dataloader_train, k, d_min, self.date)
             else:
                 network = torch.load('../online_new/adv_fcnn_white/ut_adv_white_fcnn_newlr=2.5' + '%d-' % k + '.pth')
             #network = torch.load('../online_new/adv_fcnn_white/ut_adv_white_fcnn_newlr=2.5' + '%d-' % k + '.pth')
