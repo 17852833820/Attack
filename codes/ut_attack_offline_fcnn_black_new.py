@@ -55,8 +55,8 @@ class UT_offine_conv_black():
 
         myloss2 = MyLoss2().to(device)
         myloss3 = WeightLoss().to(device)
-        optimizer = optim.SGD(network.parameters(), lr=0.5, momentum=0.5)
-        #optimizer = optim.Adadelta(network.parameters(), lr=3)
+        #optimizer = optim.SGD(network.parameters(), lr=0.1, momentum=0.1)
+        optimizer = optim.Adadelta(network.parameters(), lr=0.2)
         for data in train_loader:
             _, pos, inputs = data
             loss_temp = 0.0
@@ -64,7 +64,7 @@ class UT_offine_conv_black():
             pos, inputs = pos.to(device), inputs.to(device)
             second_loss = []
             third_loss = []
-            for Epoch in range(8000):  #
+            for Epoch in range(5000):  #
                 optimizer.zero_grad()
                 data_per, weights = network(inputs, date)  # add perturbation
                 output = model(data_per)  # location predicts
@@ -92,7 +92,7 @@ class UT_offine_conv_black():
                 elif loss2 <= 0.2 and loss3 >= 0.1:
                     alpha = 100.0
                 else:
-                    alpha = 0.00001
+                    alpha = 0.0001
                 if Epoch==2000:
                     mean_first=np.mean(second_loss)
                     std_first=np.std(second_loss)

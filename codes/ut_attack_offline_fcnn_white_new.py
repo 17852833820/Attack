@@ -22,10 +22,10 @@ class UT_offine_fcnn_white():
         self.path_train = '../datas/Online_B_down_SIMO.csv'
         self.path_test = '../datas/Online_B_up_SIMO.csv'
         # self.model = torch.load('../offline/conv_white/ConvCNN_white.pth', map_location=torch.device('cpu'))
-        self.model = torch.load('../online/fcnn_white/FCNN_white.pth')
+        self.model = torch.load('../online_new/fcnn_white/FCNN_white.pth')
         self.CNN = Generator.Generator()
 
-        self.errors90_all = pickle.load(open("../online/fcnn_white/FCNN_white_meta_error90_info.pkl", 'rb'))
+        self.errors90_all = pickle.load(open("../online_new/fcnn_white/FCNN_white_meta_error90_info.pkl", 'rb'))
         self.date = 0.15
 
         self.Errs_k_b = np.empty((1, 1 + 500))
@@ -35,7 +35,7 @@ class UT_offine_fcnn_white():
         self.Adv_weights = np.empty((1, 1 + 52))
         self.Perdiction_b = np.empty((1, 1 + 500*2))
         self.Perdiction_a = np.empty((1, 1 + 500*2))
-        self.writer= SummaryWriter('../runtime/logs/trainGAN/UT-FCNN-white/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
+        self.writer= SummaryWriter('../logs/trainGAN/UT-FCNN-white/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
 
     def setup_seed(self,seed):
         torch.manual_seed(seed)
@@ -46,7 +46,7 @@ class UT_offine_fcnn_white():
 
     # train adversarial network
     def Train_adv_network(self,model, network, device, train_loader, k, dmin, date):
-        original_location = torch.tensor([(k // 5 + 1)/8, (k % 5 + 1)/5]).to(device)
+        original_location = torch.tensor([(k  + 1)/10.0, (k  + 1)/1.0]).to(device)
         d_new = 5*dmin
         model = model.to(device)
         network = network.to(device)
@@ -56,15 +56,16 @@ class UT_offine_fcnn_white():
         myloss1 = MyLoss2().to(device)
         myloss2 = WeightLoss().to(device)
         # optimizer = optim.SGD(network.parameters(), lr=0.1, momentum=0.5)
-        optimizer = optim.Adadelta(network.parameters(), lr=2.5)
+        optimizer = optim.Adadelta(network.parameters(), lr=1.0)
         for data in train_loader:
             _, pos, inputs = data
             pos, inputs = pos.to(device), inputs.to(device)
             loss_temp = 0.0
             alpha = 0.1
-            for Epoch in range(8000):  #
-                second_loss = []
-                third_loss = []
+            second_loss = []
+            third_loss = []
+            for Epoch in range(2000):  #
+
                 optimizer.zero_grad()
                 data_per, weights = network(inputs, date)  # add perturbation
                 output = model(data_per)  # location predicts
@@ -77,22 +78,28 @@ class UT_offine_fcnn_white():
                 self.writer.add_scalar('train/loss2', loss2, Epoch)
                 loss.backward()
                 optimizer.step()
-                second_loss.append(loss1.cpu())
-                third_loss.append(loss2.cpu())
-                print('[%d][%d] Second loss and third loss:  %.6f & %.6f' %
-                      (k, Epoch + 1,  max(second_loss), max(third_loss)))
+                second_loss.append(loss1.cpu().item())
+                third_loss.append(loss2.cpu().item())
+                print('[%d][%d] Second loss and third loss:  %.6f & %.6f alpha:%6f' %
+                      (k, Epoch + 1, loss1, loss2, alpha))
                 # if abs(max(second_loss)-loss_temp) <= 0.000001 and d_new <= 3*dmin:
                 #     d_new = d_new*1.05
 
-                if Epoch > 100 and max(second_loss) <= 0.01 and max(third_loss) <= 0.01:
+                if loss1 <= 0.01 and loss2 <= 0.01:
                     break
                 loss_temp = max(second_loss)
-                if max(second_loss) <= 0.01 and max(third_loss) <= 0.01:
-                    break
-                if max(second_loss) <= 0.1 and max(third_loss) >= 0.1:
-                    alpha = 10.0
+
+                if loss1 <= 0.1 and loss2 >= 0.08:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
+                    alpha = 200.0
+                elif loss1 <= 0.2 and loss2 >= 0.1:
+                    alpha = 100.0
                 else:
                     alpha = 0.001
+                if Epoch==1000:
+                    mean_first=np.mean(second_loss)
+                    std_first=np.std(second_loss)
+                if Epoch ==1500 and mean_first-2*std_first<=loss2.cpu()<=mean_first+2*std_first:
+                    alpha=200.0
 
         if isinstance(network, torch.nn.DataParallel):
             torch.save(network.module, '../online/adv_fcnn_white/ut_adv_white_fcnn_newlr=2.5' + '%d-' % k + '.pth')
