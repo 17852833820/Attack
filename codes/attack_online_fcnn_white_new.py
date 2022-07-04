@@ -60,7 +60,7 @@ class T_offine_fcnn_white():
     # train adversarial network
     def Train_adv_network(self,model, network, device, train_loader, k, n, dmax, date):
         target_location = torch.tensor([(n+1) / 10.0, 0.0/1.0]).to(device)
-        d_new = dmax-0.2
+        d_new = dmax-0.3
         model = model.to(device)
         network = network.to(device)
         for param_model in model.parameters():  # fix parameters of loc model
@@ -70,7 +70,7 @@ class T_offine_fcnn_white():
         myloss3 = WeightLoss().to(device)
 
         # optimizer = optim.SGD(network.parameters(), lr=0.5, momentum=0.5)
-        optimizer = optim.Adadelta(network.parameters(), lr=1.0)
+        optimizer = optim.Adadelta(network.parameters(), lr=50.0)
 
         for data in train_loader:
             _, pos, inputs = data
@@ -79,7 +79,7 @@ class T_offine_fcnn_white():
             alpha = 0.1
             first_loss = []
             third_loss = []
-            for Epoch in range(3000):  #
+            for Epoch in range(10000):  #
                 optimizer.zero_grad()
                 data_per, weights = network(inputs, date)  # add perturbation
                 output = model(data_per)  # location predicts
@@ -177,7 +177,7 @@ class T_offine_fcnn_white():
             threshold_k = self.errors90_all[k] + self.d_max
             list_k = self.pairing(k, threshold_k)
             for n in list_k:
-                if k==1 or k==7 or k==8 or k==9:
+                if  k==7 or k==8 or k==9:
                     network = self.Train_adv_network(self.model, self.CNN, self.device, dataloader_train, k, n, self.d_max,self.date)
                 else:
                     network = torch.load('../online_new/adv_fcnn_white/adv_white_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
