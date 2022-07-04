@@ -47,7 +47,7 @@ class UT_offine_conv_black():
     # train adversarial network
     def Train_adv_network(self,model, network, device, train_loader, k, dmin, date):
         original_location = torch.tensor([(k  + 1)/10.0, (k  + 1)/1.0]).to(device)
-        d_new = 5*dmin
+        d_new = 6*dmin
         model = model.to(device)
         network = network.to(device)
         for param_model in model.parameters():  # fix parameters of loc model
@@ -56,7 +56,7 @@ class UT_offine_conv_black():
         myloss2 = MyLoss2().to(device)
         myloss3 = WeightLoss().to(device)
         #optimizer = optim.SGD(network.parameters(), lr=0.1, momentum=0.1)
-        optimizer = optim.Adadelta(network.parameters(), lr=0.2)
+        optimizer = optim.Adadelta(network.parameters(), lr=20.2)
         for data in train_loader:
             _, pos, inputs = data
             loss_temp = 0.0
@@ -64,7 +64,7 @@ class UT_offine_conv_black():
             pos, inputs = pos.to(device), inputs.to(device)
             second_loss = []
             third_loss = []
-            for Epoch in range(5000):  #
+            for Epoch in range(1000):  #
                 optimizer.zero_grad()
                 data_per, weights = network(inputs, date)  # add perturbation
                 output = model(data_per)  # location predicts
@@ -147,9 +147,10 @@ class UT_offine_conv_black():
             dataloader_train = torch.utils.data.DataLoader(data_train, batch_size=500, shuffle=True)
             dataloader_test = torch.utils.data.DataLoader(data_test, batch_size=500, shuffle=True)
             d_min = self.errors90_all[k] + 0.3
-
-            #network = torch.load('../online_new/adv_conv_black/ut_adv_black_conv_new' + '%d-' % k + '.pth')
-            network = self.Train_adv_network(self.model_surrogate, self.CNN, self.device, dataloader_train, k, d_min, self.date)
+            if k<4:
+                network = torch.load('../online_new/adv_fcnn_black/ut_adv_black_fcnn' + '%d-' % k + '.pth')
+            else:
+                network = self.Train_adv_network(self.model_surrogate, self.CNN, self.device, dataloader_train, k, d_min, self.date)
             _, err_k_b, err_k_a, final_acc_b, final_acc_a, adv_weight,loc_prediction_b,loc_prediction_a = self.Test_adv_network(self.model_victim, network, self.device, dataloader_test, k, d_min, self.date)
             self.Errs_k_b = np.append(self.Errs_k_b, np.array([np.concatenate((np.array([k]), err_k_b))]), axis=0)
             self.Errs_k_a = np.append(self.Errs_k_a, np.array([np.concatenate((np.array([k]), err_k_a))]), axis=0)

@@ -1,0 +1,6 @@
+Before Error_k 0.5 & 0.9: 0.03999 & 0.04606
+After Error_k 0.5 & 0.9: 0.10267 & 0.12780
+ Before and After Attack accuracy: 0.00000 0.0
+Overall Accuracy Before and After: 0.00240 & 0.71280
+Before Error_k 0.5 & 0.9: 0.17313 & 2.26420
+After Error_k 0.5 & 0.9: 1.77371 & 4.70825

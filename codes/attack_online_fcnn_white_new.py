@@ -116,9 +116,9 @@ class T_offine_fcnn_white():
                     alpha=200.0
 
         if isinstance(network, torch.nn.DataParallel):
-            torch.save(network.module, '../online_new/adv_fcnn_white/adv_white_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
+            torch.save(network.module, '../online_new/adv_fcnn_white/adv_white_fcnn_new7.4-' + '%d-' % k + '%d' % n + '.pth')
         else:
-            torch.save(network, '../online_new/adv_fcnn_white/adv_white_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
+            torch.save(network, '../online_new/adv_fcnn_white/adv_white_fcnn_new7.4-' + '%d-' % k + '%d' % n + '.pth')
         return network
 
 
@@ -176,9 +176,10 @@ class T_offine_fcnn_white():
             threshold_k = self.errors90_all[k] + self.d_max
             list_k = self.pairing(k, threshold_k)
             for n in list_k:
-                #network = torch.load('../online/adv_fcnn_white/adv_white_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
-                network = self.Train_adv_network(self.model, self.CNN, self.device, dataloader_train, k, n, self.d_max,
-                                                 self.date)
+                if k==1 or k==7 or k==8 or k==9:
+                    network = self.Train_adv_network(self.model, self.CNN, self.device, dataloader_train, k, n, self.d_max,self.date)
+                else:
+                    network = torch.load('../online_new/adv_fcnn_white/adv_white_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
                 _, _, err_k_b, err_k_a, err_n_b, err_n_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = self.Test_adv_network(
                     self.model, network, self.device, dataloader_test, k, n, self.d_max, self.date)
                 self.Errs_k_b = np.append(self.Errs_k_b, np.array([np.concatenate((np.array([k, n]), err_k_b))]),axis=0)
@@ -208,7 +209,7 @@ class T_offine_fcnn_white():
         print('Before Error_n 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_n_b[:, 2:252], 0.5), np.quantile(self.Errs_n_b[:, 2:252], 0.9)))
         print('After Error_n 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_n_a[:, 2:252], 0.5), np.quantile(self.Errs_n_a[:, 2:252], 0.9)))
 
-        file_name = '../online_new/fcnn_white/Attack_Results_all_fcnn_white_new.mat'
+        file_name = '../online_new/fcnn_white/Attack_Results_all_fcnn_white_new7.4-.mat'
         savemat(file_name, {'Errors_k_b': self.Errs_k_b, 'Errors_n_b': self.Errs_n_b, 'Errors_k_a': self.Errs_k_a, 'Errors_n_a': self.Errs_n_a, 'Accuracy_before': self.Accs_b, 'Accuracy_after': self.Accs_a, 'Adv_weights': self.Adv_weights,'Prediction_b':self.Prediction_b,"Prediction_a":self.Prediction_a})
 if __name__ == '__main__':
     attacker=T_offine_fcnn_white()

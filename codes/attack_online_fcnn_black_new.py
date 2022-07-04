@@ -224,6 +224,8 @@ class T_offine_fcnn_white():
         self.Accs_a = np.delete(self.Accs_a, [0], axis=0)
         self.Adv_weights = np.delete(self.Adv_weights, [0], axis=0)
         print('adv_weight{0}'.format(self.Adv_weights))
+
+
         self.Prediction_b = np.delete(self.Prediction_b, [0], axis=0)
         self.Prediction_a = np.delete(self.Prediction_a, [0], axis=0)
 

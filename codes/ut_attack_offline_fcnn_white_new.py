@@ -47,7 +47,7 @@ class UT_offine_fcnn_white():
     # train adversarial network
     def Train_adv_network(self,model, network, device, train_loader, k, dmin, date):
         original_location = torch.tensor([(k  + 1)/10.0, (k  + 1)/1.0]).to(device)
-        d_new = 5*dmin
+        d_new = 1.6*dmin
         model = model.to(device)
         network = network.to(device)
         for param_model in model.parameters():  # fix parameters of loc model
@@ -55,7 +55,7 @@ class UT_offine_fcnn_white():
 
         myloss1 = MyLoss2().to(device)
         myloss2 = WeightLoss().to(device)
-        # optimizer = optim.SGD(network.parameters(), lr=0.1, momentum=0.5)
+        #optimizer = optim.SGD(network.parameters(), lr=5.1, momentum=0.5)
         optimizer = optim.Adadelta(network.parameters(), lr=1.0)
         for data in train_loader:
             _, pos, inputs = data
@@ -64,7 +64,7 @@ class UT_offine_fcnn_white():
             alpha = 0.1
             second_loss = []
             third_loss = []
-            for Epoch in range(2000):  #
+            for Epoch in range(5000):  #
 
                 optimizer.zero_grad()
                 data_per, weights = network(inputs, date)  # add perturbation
@@ -89,9 +89,9 @@ class UT_offine_fcnn_white():
                     break
                 loss_temp = max(second_loss)
 
-                if loss1 <= 0.1 and loss2 >= 0.08:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
+                if loss1 <= 0.01 and loss2 >= 0.05:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
                     alpha = 200.0
-                elif loss1 <= 0.2 and loss2 >= 0.1:
+                elif loss1 <= 0.5 and loss2 >= 0.1:
                     alpha = 100.0
                 else:
                     alpha = 0.001
@@ -102,9 +102,9 @@ class UT_offine_fcnn_white():
                     alpha=200.0
 
         if isinstance(network, torch.nn.DataParallel):
-            torch.save(network.module, '../online/adv_fcnn_white/ut_adv_white_fcnn_newlr=2.5' + '%d-' % k + '.pth')
+            torch.save(network.module, '../online_new/adv_fcnn_white/ut_adv_white_fcnn_newlr=2.5' + '%d-' % k + '.pth')
         else:
-            torch.save(network, '../online/adv_fcnn_white/ut_adv_white_fcnn_newlr=2.5' + '%d-' % k + '.pth')
+            torch.save(network, '../online_new/adv_fcnn_white/ut_adv_white_fcnn_newlr=2.5' + '%d-' % k + '.pth')
         return network
 
 
@@ -148,9 +148,11 @@ class UT_offine_fcnn_white():
             dataloader_train = torch.utils.data.DataLoader(data_train, batch_size=500, shuffle=True)
             dataloader_test = torch.utils.data.DataLoader(data_test, batch_size=500, shuffle=False)
             d_min = self.errors90_all[k] + 0.3
-
-            #network = torch.load('../online/adv_fcnn_white/ut_adv_white_fcnn_new' + '%d-' % k + '.pth')
-            network = self.Train_adv_network(self.model, self.CNN, self.device, dataloader_train, k, d_min, self.date)
+            if   k==7 or k==9:
+                network = self.Train_adv_network(self.model, self.CNN, self.device, dataloader_train, k, d_min, self.date)
+            else:
+                network = torch.load('../online_new/adv_fcnn_white/ut_adv_white_fcnn_newlr=2.5' + '%d-' % k + '.pth')
+            #network = torch.load('../online_new/adv_fcnn_white/ut_adv_white_fcnn_newlr=2.5' + '%d-' % k + '.pth')
             _, err_k_b, err_k_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = self.Test_adv_network(self.model, network, self.device, dataloader_test, k, d_min, self.date)
             self.Errs_k_b = np.append(self.Errs_k_b, np.array([np.concatenate((np.array([k]), err_k_b))]), axis=0)
             self.Errs_k_a = np.append(self.Errs_k_a, np.array([np.concatenate((np.array([k]), err_k_a))]), axis=0)
@@ -171,7 +173,7 @@ class UT_offine_fcnn_white():
         print('Before Error_k 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_k_b[:, 1:251], 0.5), np.quantile(self.Errs_k_b[:, 1:251], 0.9)))
         print('After Error_k 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_k_a[:, 1:251], 0.5), np.quantile(self.Errs_k_a[:, 1:251], 0.9)))
 
-        file_name = '../online/fcnn_white/ut_Attack_Results_all_fcnn_white_new-lr=2.5.mat'
+        file_name = '../online_new/fcnn_white/ut_Attack_Results_all_fcnn_white_new-lr=2.5.mat'
         savemat(file_name, {'Errors_k_b': self.Errs_k_b, 'Errors_k_a': self.Errs_k_a, 'Accuracy_before': self.Accs_b, 'Accuracy_after': self.Accs_a, 'Adv_weights': self.Adv_weights , 'Perdiction_b': self.Perdiction_b, 'Perdiction_a': self.Perdiction_a})
 if __name__ == '__main__':
     attacker=UT_offine_fcnn_white()
