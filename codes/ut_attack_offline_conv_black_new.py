@@ -55,8 +55,8 @@ class UT_offine_conv_black():
 
         myloss2 = MyLoss2().to(device)
         myloss3 = WeightLoss().to(device)
-        # optimizer = optim.SGD(network.parameters(), lr=0.5, momentum=0.5)
-        optimizer = optim.Adadelta(network.parameters(), lr=0.5)
+        optimizer = optim.SGD(network.parameters(), lr=0.5, momentum=0.5)
+        optimizer = optim.Adadelta(network.parameters(), lr=3)
         for data in train_loader:
             _, pos, inputs = data
             loss_temp = 0.0
@@ -64,7 +64,7 @@ class UT_offine_conv_black():
             pos, inputs = pos.to(device), inputs.to(device)
             second_loss = []
             third_loss = []
-            for Epoch in range(2000):  #
+            for Epoch in range(8000):  #
                 optimizer.zero_grad()
                 data_per, weights = network(inputs, date)  # add perturbation
                 output = model(data_per)  # location predicts
@@ -88,11 +88,11 @@ class UT_offine_conv_black():
                 if loss2 <= 0.01 and loss3 <= 0.01:
                     continue
                 if loss2 <= 0.1 and loss3 >= 0.05:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
-                    alpha = 100.0
+                    alpha = 200.0
                 elif loss2 <= 0.2 and loss3 >= 0.1:
-                    alpha = 50.0
+                    alpha = 100.0
                 else:
-                    alpha = 0.1
+                    alpha = 0.00001
                 if Epoch==2000:
                     mean_first=np.mean(second_loss)
                     std_first=np.std(second_loss)
@@ -100,9 +100,9 @@ class UT_offine_conv_black():
                     alpha=100.0
 
         if isinstance(network, torch.nn.DataParallel):
-            torch.save(network.module, '../online_new/adv_conv_black/ut_adv_black_conv_new' + '%d-' % k + '.pth')
+            torch.save(network.module, '../online_new/adv_conv_black/ut_adv_black_conv_new1' + '%d-' % k + '.pth')
         else:
-            torch.save(network, '../online_new/adv_conv_black/ut_adv_black_conv_new' + '%d-' % k + '.pth')
+            torch.save(network, '../online_new/adv_conv_black/ut_adv_black_conv_new1' + '%d-' % k + '.pth')
         return network
 
 
@@ -170,7 +170,7 @@ class UT_offine_conv_black():
         print('After Error_k 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_k_a[:, 1:251], 0.5), np.quantile(self.Errs_k_a[:, 1:251], 0.9)))
 
 
-        file_name = '../online_new/conv_white/ut_Attack_Results_all_conv_black_new.mat'
+        file_name = '../online_new/conv_black/ut_Attack_Results_all_conv_black_new1.mat'
         savemat(file_name, {'Errors_k_b': self.Errs_k_b, 'Errors_k_a': self.Errs_k_a, 'Accuracy_before': self.Accs_b, 'Accuracy_after': self.Accs_a, 'Adv_weights': self.Adv_weights , 'Perdiction_b': self.Perdiction_b, 'Perdiction_a': self.Perdiction_a})
 if __name__ == '__main__':
     attacker=UT_offine_conv_black()

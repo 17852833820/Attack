@@ -112,7 +112,7 @@ class T_offine_fcnn_white():
                 elif loss1<=0.2 and loss3>=0.1:
                     alpha=50.0
                 else:
-                    alpha = 0.1
+                    alpha = 0.001
                 if Epoch==2000:
                     mean_first=np.mean(first_loss)
                     std_first=np.std(first_loss)
@@ -120,10 +120,11 @@ class T_offine_fcnn_white():
                     alpha=100.0
 
         if isinstance(network, torch.nn.DataParallel):
-            torch.save(network.module, '../online_new/adv_conv_balck/adv_balck_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
+            torch.save(network.module, '../online_new/adv_conv_black/adv_black_conv_new' + '%d-' % k + '%d' % n + '.pth')
         else:
-            torch.save(network, '../online_new/adv_conv_balck/adv_balck_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
+            torch.save(network, '../online_new/adv_conv_black/adv_black_conv_new' + '%d-' % k + '%d' % n + '.pth')
         return network
+
 
 
     def Test_adv_network(self,model, network, device, test_loader, k, n, dmax, date):  # model: Loc model, CNN: perturbation model, K: original location, n: targeted location, dmax：threshold
@@ -179,20 +180,20 @@ class T_offine_fcnn_white():
                                                           pin_memory=True)
             threshold_k = self.errors90_all[k] + self.d_max
             list_k = self.pairing(k, threshold_k)
-            counter=0
             for n in list_k:
-                flag=0
+                d_new=0.3
+                print("【%d-%d】【%3f】"%(k,n,d_new))
+                #network = torch.load('../online_new/adv_fcnn_balck/adv_balck_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
+                network = self.Train_adv_network(self.model_surrogate, self.CNN, self.device, dataloader_train, k, n, self.d_max,
+                                                 self.date,d_new)
+                _, _, err_k_b1, err_k_a1, err_n_b1, err_n_a1, final_acc_b1, final_acc_a1, adv_weight1, loc_prediction_b1, loc_prediction_a1 = self.Test_adv_network(
+                    self.model_victim, network, self.device, dataloader_test, k, n, self.d_max, self.date)
+                smoothness1=torch.norm(torch.diff(adv_weight1),p=2)
+                print("Acc.: %3f & Smoothness: %3f "% (final_acc_a1,smoothness1))
+                err_k_b, err_k_a, err_n_b, err_n_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = err_k_b1, err_k_a1, err_n_b1, err_n_a1, final_acc_b1, final_acc_a1, adv_weight1, loc_prediction_b1, loc_prediction_a1
                 for d_new in np.arange(0.25,0.05,-0.05):
-                    print("【%d-%d】【%3f】"%(k,n,d_new))
-                    #network = torch.load('../online_new/adv_fcnn_balck/adv_balck_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
-                    network = self.Train_adv_network(self.model_surrogate, self.CNN, self.device, dataloader_train, k, n, self.d_max,
-                                                     self.date,d_new)
-                    _, _, err_k_b1, err_k_a1, err_n_b1, err_n_a1, final_acc_b1, final_acc_a1, adv_weight1, loc_prediction_b1, loc_prediction_a1 = self.Test_adv_network(
-                        self.model_victim, network, self.device, dataloader_test, k, n, self.d_max, self.date)
-                    smoothness1=torch.norm(torch.diff(adv_weight1),p=2)
-                    print("Acc.: %3f & Smoothness: %3f "% (final_acc_a1,smoothness1))
-                    if final_acc_a1 >=0.98 and smoothness1 <0.1:
-                        pass
+                    if final_acc_a1 >=0.98 and smoothness1.item() <0.1:
+                        break
                     else:
                         network = self.Train_adv_network(self.model_surrogate, self.CNN, self.device, dataloader_train, k,n, self.d_max,self.date,d_new)
                         _, _, err_k_b2, err_k_a2, err_n_b2, err_n_a2, final_acc_b2, final_acc_a2, adv_weight2, loc_prediction_b2, loc_prediction_a2 = self.Test_adv_network(
@@ -200,20 +201,18 @@ class T_offine_fcnn_white():
                         smoothness2 = torch.norm(torch.diff(adv_weight2), p=2)
                         print("Acc2.: %3f & Smoothness2: %3f " % (final_acc_a2, smoothness2))
                         if final_acc_a2 >=final_acc_a1-0.005 and smoothness2<smoothness1:
-                            flag+=1
+                            err_k_b, err_k_a, err_n_b, err_n_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = err_k_b2, err_k_a2, err_n_b2, err_n_a2, final_acc_b2, final_acc_a2, adv_weight2, loc_prediction_b2, loc_prediction_a2
                             print("sucessful")
-                            torch.save(network,'../online_new/adv_conv_balck/adv_balck_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
-                if flag>0:
-                    counter+=1
-                self.Errs_k_b = np.append(self.Errs_k_b, np.array([np.concatenate((np.array([k, n]), err_k_b2))]),axis=0)
-                self.Errs_n_b = np.append(self.Errs_n_b, np.array([np.concatenate((np.array([k, n]), err_n_b2))]),axis=0)
-                self.Errs_k_a = np.append(self.Errs_k_a, np.array([np.concatenate((np.array([k, n]), err_k_a2))]),axis=0)
-                self.Errs_n_a = np.append(self.Errs_n_a, np.array([np.concatenate((np.array([k, n]), err_n_a2))]),axis=0)
-                self.Accs_b = np.append(self.Accs_b,np.array([np.concatenate((np.array([k, n]), np.array([final_acc_b2])))]),axis=0)
-                self.Accs_a = np.append(self.Accs_a,np.array([np.concatenate((np.array([k, n]), np.array([final_acc_a2])))]),axis=0)
-                self.Adv_weights = np.append(self.Adv_weights, np.concatenate((np.array([[k, n]]), adv_weight2), axis=1),axis=0)
-                self.Prediction_a = np.append(self.Prediction_a,np.array([np.concatenate((np.array([k]), loc_prediction_a2))]),axis=0)
-                self.Prediction_b = np.append(self.Prediction_b,np.array([np.concatenate((np.array([k]), loc_prediction_b2))]),axis=0)
+                            torch.save(network,'../online_new/adv_conv_black/adv_balck_conv_new' + '%d-' % k + '%d' % n + '.pth')
+                self.Errs_k_b = np.append(self.Errs_k_b, np.array([np.concatenate((np.array([k, n]), err_k_b))]),axis=0)
+                self.Errs_n_b = np.append(self.Errs_n_b, np.array([np.concatenate((np.array([k, n]), err_n_b))]),axis=0)
+                self.Errs_k_a = np.append(self.Errs_k_a, np.array([np.concatenate((np.array([k, n]), err_k_a))]),axis=0)
+                self.Errs_n_a = np.append(self.Errs_n_a, np.array([np.concatenate((np.array([k, n]), err_n_a))]),axis=0)
+                self.Accs_b = np.append(self.Accs_b,np.array([np.concatenate((np.array([k, n]), np.array([final_acc_b])))]),axis=0)
+                self.Accs_a = np.append(self.Accs_a,np.array([np.concatenate((np.array([k, n]), np.array([final_acc_a])))]),axis=0)
+                self.Adv_weights = np.append(self.Adv_weights, np.concatenate((np.array([[k, n]]), adv_weight), axis=1),axis=0)
+                self.Prediction_a = np.append(self.Prediction_a,np.array([np.concatenate((np.array([k]), loc_prediction_a))]),axis=0)
+                self.Prediction_b = np.append(self.Prediction_b,np.array([np.concatenate((np.array([k]), loc_prediction_b))]),axis=0)
 
         self.Errs_k_b = np.delete(self.Errs_k_b, [0], axis=0)
         self.Errs_n_b = np.delete(self.Errs_n_b, [0], axis=0)
@@ -232,7 +231,7 @@ class T_offine_fcnn_white():
         print('Before Error_n 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_n_b[:, 2:252], 0.5), np.quantile(self.Errs_n_b[:, 2:252], 0.9)))
         print('After Error_n 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_n_a[:, 2:252], 0.5), np.quantile(self.Errs_n_a[:, 2:252], 0.9)))
 
-        file_name = '../online_new/conv_black/Attack_Results_all_fcnn_black_new.mat'
+        file_name = '../online_new/conv_black/Attack_Results_all_conv_black_new.mat'
         savemat(file_name, {'Errors_k_b': self.Errs_k_b, 'Errors_n_b': self.Errs_n_b, 'Errors_k_a': self.Errs_k_a, 'Errors_n_a': self.Errs_n_a, 'Accuracy_before': self.Accs_b, 'Accuracy_after': self.Accs_a, 'Adv_weights': self.Adv_weights,'Prediction_b':self.Prediction_b,"Prediction_a":self.Prediction_a})
 if __name__ == '__main__':
     attacker=T_offine_fcnn_white()

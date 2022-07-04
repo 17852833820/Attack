@@ -1,0 +1,5 @@
+Overall Accuracy Before and After: 0.00420 & 0.11620
+Before Error_k 0.5 & 0.9: 0.17382 & 2.67967
+After Error_k 0.5 & 0.9: 1.16835 & 3.12455
+Before Error_n 0.5 & 0.9: 1.70084 & 2.14871
+After Error_n 0.5 & 0.9: 1.25924 & 1.81759

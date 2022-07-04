@@ -37,7 +37,7 @@ class T_offine_fcnn_white():
         self.Accs_b = np.empty((1, 2 + 1))
         self.Accs_a = np.empty((1, 2 + 1))
         self.Adv_weights = np.empty((1, 2 + 52))
-        self.writer= SummaryWriter('../logs/trainGAN/T-FCNN-white/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
+        self.writer= SummaryWriter('../logs/trainGAN/T-FCNN-black/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
 
     # 设置随机数种子
     def setup_seed(self,seed):
@@ -62,9 +62,9 @@ class T_offine_fcnn_white():
 
 
     # train adversarial network
-    def Train_adv_network(self,model, network, device, train_loader, k, n, dmax, date):
+    def Train_adv_network(self,model, network, device, train_loader, k, n, dmax, date,d_new):
         target_location = torch.tensor([(n+1) / 10.0, 0.0/1.0]).to(device)
-        d_new = dmax-0.2
+        #d_new = dmax-0.2
         model = model.to(device)
         network = network.to(device)
         for param_model in model.parameters():  # fix parameters of loc model
@@ -180,20 +180,41 @@ class T_offine_fcnn_white():
             threshold_k = self.errors90_all[k] + self.d_max
             list_k = self.pairing(k, threshold_k)
             for n in list_k:
-                #network = torch.load('../online/adv_fcnn_balck/adv_balck_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
-                network = self.Train_adv_network(self.model_surrogate, self.CNN, self.device, dataloader_train, k, n, self.d_max,
-                                                 self.date)
-                _, _, err_k_b, err_k_a, err_n_b, err_n_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = self.Test_adv_network(
+                d_new=0.25
+                print("【%d-%d】【%3f】" % (k, n, d_new))
+                # network = torch.load('../online_new/adv_fcnn_balck/adv_balck_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
+                network = self.Train_adv_network(self.model_surrogate, self.CNN, self.device, dataloader_train, k,n, self.d_max,self.date, d_new)
+                _, _, err_k_b1, err_k_a1, err_n_b1, err_n_a1, final_acc_b1, final_acc_a1, adv_weight1, loc_prediction_b1, loc_prediction_a1 = self.Test_adv_network(
                     self.model_victim, network, self.device, dataloader_test, k, n, self.d_max, self.date)
-                self.Errs_k_b = np.append(self.Errs_k_b, np.array([np.concatenate((np.array([k, n]), err_k_b))]),axis=0)
-                self.Errs_n_b = np.append(self.Errs_n_b, np.array([np.concatenate((np.array([k, n]), err_n_b))]),axis=0)
-                self.Errs_k_a = np.append(self.Errs_k_a, np.array([np.concatenate((np.array([k, n]), err_k_a))]),axis=0)
-                self.Errs_n_a = np.append(self.Errs_n_a, np.array([np.concatenate((np.array([k, n]), err_n_a))]),axis=0)
-                self.Accs_b = np.append(self.Accs_b,np.array([np.concatenate((np.array([k, n]), np.array([final_acc_b])))]),axis=0)
-                self.Accs_a = np.append(self.Accs_a,np.array([np.concatenate((np.array([k, n]), np.array([final_acc_a])))]),axis=0)
-                self.Adv_weights = np.append(self.Adv_weights, np.concatenate((np.array([[k, n]]), adv_weight), axis=1),axis=0)
-                self.Prediction_a = np.append(self.Prediction_a,np.array([np.concatenate((np.array([k]), loc_prediction_a))]),axis=0)
-                self.Prediction_b = np.append(self.Prediction_b,np.array([np.concatenate((np.array([k]), loc_prediction_b))]),axis=0)
+                smoothness1 = torch.norm(torch.diff(adv_weight1), p=2)
+                print("Acc.: %3f & Smoothness: %3f " % (final_acc_a1, smoothness1))
+                err_k_b, err_k_a, err_n_b, err_n_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = err_k_b1, err_k_a1, err_n_b1, err_n_a1, final_acc_b1, final_acc_a1, adv_weight1, loc_prediction_b1, loc_prediction_a1
+
+                for d_new in np.arange(0.2, 0.05, -0.05):
+
+                    if final_acc_a1 >= 0.98 and smoothness1 < 0.1:
+                        break
+                    else:
+                        network = self.Train_adv_network(self.model_surrogate, self.CNN, self.device, dataloader_train,
+                                                         k, n, self.d_max, self.date, d_new)
+                        _, _, err_k_b2, err_k_a2, err_n_b2, err_n_a2, final_acc_b2, final_acc_a2, adv_weight2, loc_prediction_b2, loc_prediction_a2 = self.Test_adv_network(
+                            self.model_victim, network, self.device, dataloader_test, k, n, self.d_max, self.date)
+                        smoothness2 = torch.norm(torch.diff(adv_weight2), p=2)
+                        print("Acc2.: %3f & Smoothness2: %3f " % (final_acc_a2, smoothness2))
+                        if final_acc_a2 >= final_acc_a1 - 0.005 and smoothness2 < smoothness1:
+                            err_k_b, err_k_a, err_n_b, err_n_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = err_k_b2, err_k_a2, err_n_b2, err_n_a2, final_acc_b2, final_acc_a2, adv_weight2, loc_prediction_b2, loc_prediction_a2
+                            print("sucessful")
+                            torch.save(network,'../online_new/adv_fcnn_balck/adv_balck_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
+
+                self.Errs_k_b = np.append(self.Errs_k_b, np.array([np.concatenate((np.array([k, n]), err_k_b2))]),axis=0)
+                self.Errs_n_b = np.append(self.Errs_n_b, np.array([np.concatenate((np.array([k, n]), err_n_b2))]),axis=0)
+                self.Errs_k_a = np.append(self.Errs_k_a, np.array([np.concatenate((np.array([k, n]), err_k_a2))]),axis=0)
+                self.Errs_n_a = np.append(self.Errs_n_a, np.array([np.concatenate((np.array([k, n]), err_n_a2))]),axis=0)
+                self.Accs_b = np.append(self.Accs_b,np.array([np.concatenate((np.array([k, n]), np.array([final_acc_b2])))]),axis=0)
+                self.Accs_a = np.append(self.Accs_a,np.array([np.concatenate((np.array([k, n]), np.array([final_acc_a2])))]),axis=0)
+                self.Adv_weights = np.append(self.Adv_weights, np.concatenate((np.array([[k, n]]), adv_weight2), axis=1),axis=0)
+                self.Prediction_a = np.append(self.Prediction_a,np.array([np.concatenate((np.array([k]), loc_prediction_a2))]),axis=0)
+                self.Prediction_b = np.append(self.Prediction_b,np.array([np.concatenate((np.array([k]), loc_prediction_b2))]),axis=0)
 
         self.Errs_k_b = np.delete(self.Errs_k_b, [0], axis=0)
         self.Errs_n_b = np.delete(self.Errs_n_b, [0], axis=0)

@@ -9,45 +9,44 @@ import torch.optim as optim
 from scipy.io import savemat
 import math
 import pickle
+import time
 from codes.model import Generator
 from tensorboardX import SummaryWriter
 from codes.loss.loss import MyLoss2,WeightLoss
-import time
-class UT_offine_fcnn_black():
-    # 设置随机数种子
+class UT_offine_conv_black():
     def __init__(self):
-        # self.setup_seed(3)
-        self.num_classes = 40
+        #self.setup_seed(3)
+        self.num_classes = 10
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.path_train = '../datas/Online_B_down_SIMO.csv'
         self.path_test = '../datas/Online_B_up_SIMO.csv'
-        self.model_surrogate = torch.load('../online/conv_black/ConvCNN_black.pth', map_location=torch.device('cpu'))
-        self.model_victim = torch.load('../online/fcnn_white/FCNN_white.pth', map_location=torch.device('cpu'))
+        self.model_surrogate = torch.load('../online_new/conv_black/ConvCNN_black.pth', map_location=torch.device('cpu'))
+        self.model_victim = torch.load('../online_new/fcnn_white/FCNN_white.pth', map_location=torch.device('cpu'))
         self.CNN = Generator.Generator()
         self.CNN_random = Generator.Generator1()
 
-        self.errors90_all = pickle.load(open("../online/fcnn_white/FCNN_white_meta_error90_info.pkl", 'rb'))
+        self.errors90_all = pickle.load(open("../online_new/fcnn_white/FCNN_white_meta_error90_info.pkl", 'rb'))
         self.date = 0.15
 
-        self.Errs_k_b = np.empty((1, 2 + 500))
-        self.Errs_k_a = np.empty((1, 2 + 500))
-        self.Accs_b = np.empty((1, 2 + 1))
-        self.Accs_a = np.empty((1, 2 + 1))
-        self.Adv_weights = np.empty((1, 2 + 52))
-        self.Perdiction_b = np.empty((1, 1 + 500*2))
-        self.Perdiction_a = np.empty((1, 1 + 500*2))
-        self.writer= SummaryWriter('../runtime/logs/trainGAN/UT-FCNN-black/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
+        self.Errs_k_b = np.empty((1, 1 + 500))
+        self.Errs_k_a = np.empty((1, 1 + 500))
+        self.Accs_b = np.empty((1, 1 + 1))
+        self.Accs_a = np.empty((1, 1 + 1))
+        self.Adv_weights = np.empty((1, 1 + 52))
+        self.Perdiction_b = np.empty((1, 1 + 500 * 2))
+        self.Perdiction_a = np.empty((1, 1 + 500 * 2))
+        self.writer= SummaryWriter('../logs/trainGAN/UT-FCNN-black/{0}/tensorboard'.format(time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time()))))
 
+    # 设置随机数种子
     def setup_seed(self,seed):
         torch.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
         np.random.seed(seed)
         random.seed(seed)
         torch.backends.cudnn.deterministic = True
-
     # train adversarial network
     def Train_adv_network(self,model, network, device, train_loader, k, dmin, date):
-        original_location = torch.tensor([(k // 5 + 1)/8, (k % 5 + 1)/5]).to(device)
+        original_location = torch.tensor([(k  + 1)/10.0, (k  + 1)/1.0]).to(device)
         d_new = 5*dmin
         model = model.to(device)
         network = network.to(device)
@@ -56,16 +55,16 @@ class UT_offine_fcnn_black():
 
         myloss2 = MyLoss2().to(device)
         myloss3 = WeightLoss().to(device)
-        # optimizer = optim.SGD(network.parameters(), lr=0.5, momentum=0.5)
-        optimizer = optim.Adadelta(network.parameters(), lr=0.5)
+        optimizer = optim.SGD(network.parameters(), lr=0.5, momentum=0.5)
+        #optimizer = optim.Adadelta(network.parameters(), lr=3)
         for data in train_loader:
             _, pos, inputs = data
             loss_temp = 0.0
-            alpha = 1.0
+            alpha = 0.1
             pos, inputs = pos.to(device), inputs.to(device)
-            for Epoch in range(2000):  #
-                second_loss = []
-                third_loss = []
+            second_loss = []
+            third_loss = []
+            for Epoch in range(8000):  #
                 optimizer.zero_grad()
                 data_per, weights = network(inputs, date)  # add perturbation
                 output = model(data_per)  # location predicts
@@ -78,24 +77,32 @@ class UT_offine_fcnn_black():
                 self.writer.add_scalar('train/loss3', loss3, Epoch)
                 loss.backward()
                 optimizer.step()
-                second_loss.append(loss2.cpu())
-                third_loss.append(loss3.cpu())
-                print('[%d][%d] Second loss and third loss:  %.6f & %.6f' %
-                      (k, Epoch + 1,  max(second_loss), max(third_loss)))
-                if abs(max(second_loss)-loss_temp) <= 0.000001 and d_new <= 3*dmin:
-                    d_new = d_new*1.05
-                if Epoch > 100 and max(second_loss) <= 0.05 and max(third_loss) <= 0.1:
-                    break
-                loss_temp = max(second_loss)
-                if max(second_loss) <= 0.05 and max(third_loss) >= 0.1:
-                    alpha = 30.0
+                second_loss.append(loss2.cpu().item())
+                third_loss.append(loss3.cpu().item())
+                print('[%d][%d] Second loss and third loss:  %.6f & %.6f alpha:%6f'  %
+                      (k, Epoch + 1,  loss2, loss3,alpha))
+                # if abs(max(second_loss)-loss_temp) <= 0.0001 and d_new <= 10*dmin:
+                #     d_new = d_new*1.05
+                #loss_temp = max(second_loss)
+
+                if loss2 <= 0.01 and loss3 <= 0.01:
+                    continue
+                if loss2 <= 0.1 and loss3 >= 0.05:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
+                    alpha = 200.0
+                elif loss2 <= 0.2 and loss3 >= 0.1:
+                    alpha = 100.0
                 else:
-                    alpha = 1.0
+                    alpha = 0.00001
+                if Epoch==2000:
+                    mean_first=np.mean(second_loss)
+                    std_first=np.std(second_loss)
+                if Epoch ==4000 and mean_first-2*std_first<=loss2.cpu()<=mean_first+2*std_first:
+                    alpha=200.0
 
         if isinstance(network, torch.nn.DataParallel):
-            torch.save(network.module, '../online/adv_fcnn_black/ut_adv_black_fcnn_new' + '%d-' % k + '.pth')
+            torch.save(network.module, '../online_new/adv_fcnn_black/ut_adv_black_fcnn' + '%d-' % k + '.pth')
         else:
-            torch.save(network, '../online/adv_fcnn_black/ut_adv_black_fcnn_new' + '%d-' % k + '.pth')
+            torch.save(network, '../online_new/adv_fcnn_black/ut_adv_black_fcnn' + '%d-' % k + '.pth')
         return network
 
 
@@ -114,9 +121,9 @@ class UT_offine_fcnn_black():
                 output = model(data_per)   #perturbed results
                 predict = model(inputs)   #genuine results
 
-                output[:, 0], output[:, 1] = output[:, 0]*8.0*1.5, output[:, 1]*5.0*1.5
-                pos[:, 0], pos[:, 1] = pos[:, 0]*8.0*1.5, pos[:, 1]*5.0*1.5
-                predict[:, 0], predict[:, 1] = predict[:, 0]*8.0*1.5, predict[:, 1]*5.0*1.5
+                output[:, 0], output[:, 1] = output[:, 0]*10.0*0.6, output[:, 1]*1.0*0.6
+                pos[:, 0], pos[:, 1] = pos[:, 0]*10.0*0.6, pos[:, 1]*1.0*0.6
+                predict[:, 0], predict[:, 1] = predict[:, 0]*10.0*0.6, predict[:, 1]*1.0*0.6
 
                 temp_k_b = F.pairwise_distance(predict, pos, p=2)  # localization errors
                 temp_k_a = F.pairwise_distance(output, pos, p=2)
@@ -124,14 +131,14 @@ class UT_offine_fcnn_black():
                 err_k_b = np.append(err_k_b, temp_k_b.cpu())
                 err_k_a = np.append(err_k_a, temp_k_a.cpu())
                 loc_prediction_b = np.append(loc_prediction_b, predict.cpu())
-                loc_prediction_a = np.append(loc_prediction_a, output.cpu())
+                loc_prediction_a = np.append(loc_prediction_a, predict.cpu())
         final_acc_a = np.sum(err_k_a >= dmin) / err_k_a.shape[0]
         final_acc_b = np.sum(err_k_b >= dmin) / err_k_b.shape[0]
         print('【%d】' % k)
         print('Before Error_k 0.5 & 0.9: %.5f & %.5f' % (np.quantile(err_k_b, 0.5), np.quantile(err_k_b, 0.9)))
         print('After Error_k 0.5 & 0.9: %.5f & %.5f' % (np.quantile(err_k_a, 0.5), np.quantile(err_k_a, 0.9)))
         print(' Before and After Attack accuracy: %.5f' % final_acc_b, final_acc_a)
-        return k, err_k_b, err_k_a, final_acc_b, final_acc_a, adv_weight.cpu(), loc_prediction_b, loc_prediction_a
+        return k, err_k_b, err_k_a, final_acc_b, final_acc_a, adv_weight.cpu(),loc_prediction_b,loc_prediction_a
 
     def run(self):
         for k in np.arange(self.num_classes):
@@ -141,9 +148,9 @@ class UT_offine_fcnn_black():
             dataloader_test = torch.utils.data.DataLoader(data_test, batch_size=500, shuffle=True)
             d_min = self.errors90_all[k] + 0.3
 
-            #network = torch.load('../online/adv_fcnn_black/ut_adv_black_fcnn_new' + '%d-' % k + '.pth')
+            #network = torch.load('../online_new/adv_conv_black/ut_adv_black_conv_new' + '%d-' % k + '.pth')
             network = self.Train_adv_network(self.model_surrogate, self.CNN, self.device, dataloader_train, k, d_min, self.date)
-            _, err_k_b, err_k_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = self.Test_adv_network(model_victim, network, device, dataloader_test, k, d_min, date)
+            _, err_k_b, err_k_a, final_acc_b, final_acc_a, adv_weight,loc_prediction_b,loc_prediction_a = self.Test_adv_network(self.model_victim, network, self.device, dataloader_test, k, d_min, self.date)
             self.Errs_k_b = np.append(self.Errs_k_b, np.array([np.concatenate((np.array([k]), err_k_b))]), axis=0)
             self.Errs_k_a = np.append(self.Errs_k_a, np.array([np.concatenate((np.array([k]), err_k_a))]), axis=0)
             self.Accs_b = np.append(self.Accs_b, np.array([np.concatenate((np.array([k]), np.array([final_acc_b])))]), axis=0)
@@ -163,8 +170,8 @@ class UT_offine_fcnn_black():
         print('After Error_k 0.5 & 0.9: %.5f & %.5f' % (np.quantile(self.Errs_k_a[:, 1:251], 0.5), np.quantile(self.Errs_k_a[:, 1:251], 0.9)))
 
 
-        file_name = '../online/conv_white/ut_Attack_Results_all_fcnn_black_new.mat'
+        file_name = '../online_new/fcnn_black/ut_Attack_Results_all_fcnn_black.mat'
         savemat(file_name, {'Errors_k_b': self.Errs_k_b, 'Errors_k_a': self.Errs_k_a, 'Accuracy_before': self.Accs_b, 'Accuracy_after': self.Accs_a, 'Adv_weights': self.Adv_weights , 'Perdiction_b': self.Perdiction_b, 'Perdiction_a': self.Perdiction_a})
 if __name__ == '__main__':
-    attacker=UT_offine_fcnn_black()
+    attacker=UT_offine_conv_black()
     attacker.run()
