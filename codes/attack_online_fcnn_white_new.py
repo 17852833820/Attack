@@ -79,7 +79,7 @@ class T_offine_fcnn_white():
             alpha = 0.1
             first_loss = []
             third_loss = []
-            for Epoch in range(10000):  #
+            for Epoch in range(3000):  #
                 optimizer.zero_grad()
                 data_per, weights = network(inputs, date)  # add perturbation
                 output = model(data_per)  # location predicts
@@ -91,6 +91,7 @@ class T_offine_fcnn_white():
                 self.writer.add_scalar('train{0}-{1}/loss1'.format(k,n), loss1, Epoch)
                 self.writer.add_scalar('train{0}-{1}/loss3'.format(k,n), loss3, Epoch)
                 loss.backward()
+
                 optimizer.step()
                 first_loss.append(loss1.cpu().item())
                 third_loss.append(loss3.cpu().item())
