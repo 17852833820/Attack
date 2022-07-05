@@ -56,7 +56,7 @@ class UT_offine_fcnn_white():
         myloss1 = MyLoss2().to(device)
         myloss2 = WeightLoss().to(device)
         optimizer = optim.SGD(network.parameters(), lr=0.8, momentum=0.1)
-        #optimizer = optim.Adadelta(network.parameters(), lr=100.0)
+        #optimizer = optim.Adadelta(network.parameters(), lr=0.1)
         for data in train_loader:
             _, pos, inputs = data
             pos, inputs = pos.to(device), inputs.to(device)
@@ -64,7 +64,7 @@ class UT_offine_fcnn_white():
             alpha = 0.1
             second_loss = []
             third_loss = []
-            for Epoch in range(10000):  #
+            for Epoch in range(50000):  #
 
                 optimizer.zero_grad()
                 data_per, weights = network(inputs, date)  # add perturbation
@@ -91,7 +91,7 @@ class UT_offine_fcnn_white():
 
                 if loss1 <= 0.01 and loss2 >= 0.05:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
                     alpha = 200.0
-                elif loss1 <=0.15 and loss2 >= 0.1:
+                elif loss1 <=0.1 and loss2 >= 0.1:
                     alpha = 100.0
                 else:
                     alpha = 0.00001

@@ -25,8 +25,8 @@ class T_offine_conv_white():
         self.errors90_all = pickle.load(open("../online_new/conv_white/ConvCNN_white_meta_error90_info.pkl", 'rb'))
         self.date = 0.15
         self.d_max = 0.3
-        self.Perdiction_b = np.empty((1, 1 + 500 * 2))
-        self.Perdiction_a = np.empty((1, 1 + 500 * 2))
+        self.Prediction_b = np.empty((1, 1 + 500 * 2))
+        self.Prediction_a = np.empty((1, 1 + 500 * 2))
         self.Errs_k_b = np.empty((1, 2 + 500))
         self.Errs_n_b = np.empty((1, 2 + 500))
         self.Errs_k_a = np.empty((1, 2 + 500))
@@ -62,7 +62,7 @@ class T_offine_conv_white():
     # train adversarial network
     def Train_adv_network(self,model, network, device, train_loader, k, n, dmax, date):
         target_location = torch.tensor([(n+1) / 10.0, 0.0/1.0]).to(device)
-        d_new = dmax-0.3
+        d_new = dmax-0.5
         model = model.to(device)
         network = network.to(device)
         for param_model in model.parameters():  # fix parameters of loc model
@@ -71,8 +71,8 @@ class T_offine_conv_white():
         myloss1 = MyLoss1().to(device)
         myloss3 = WeightLoss().to(device)
 
-        #optimizer = optim.SGD(network.parameters(), lr=0.5, momentum=0.5)
-        optimizer = optim.Adadelta(network.parameters(), lr=0.1)
+        optimizer = optim.SGD(network.parameters(), lr=0.1, momentum=0.1)
+        #optimizer = optim.Adadelta(network.parameters(), lr=1.1)
 
         for data in train_loader:
             _, pos, inputs = data
@@ -112,7 +112,7 @@ class T_offine_conv_white():
                 elif loss1<=0.1 and loss3>=0.1:
                     alpha=100.0
                 else:
-                    alpha = 0.001
+                    alpha = 0.00001
                 if Epoch == 4000:
                     mean_first = np.mean(first_loss)
                     std_first = np.std(first_loss)
@@ -181,11 +181,12 @@ class T_offine_conv_white():
             threshold_k = self.errors90_all[k] + self.d_max
             list_k = self.pairing(k, threshold_k)
             for n in list_k:
-                if k<8:
+                if k==2 or k==3 or k==5 or k==7:
                     network = torch.load('../online_new/adv_conv_white/adv_white_conv7.4tianxuan' + '%d-' % k + '%d' % n + '.pth')
+                    network = self.Train_adv_network(self.model, network, self.device, dataloader_train, k, n,
+                                                     self.d_max, self.date)
                 else:
-                    network = self.Train_adv_network(self.model, self.CNN, self.device, dataloader_train, k, n, self.d_max,
-                                                 self.date)
+                    network = torch.load('../online_new/adv_conv_white/adv_white_conv7.4tianxuan' + '%d-' % k + '%d' % n + '.pth')
                 _, _, err_k_b, err_k_a, err_n_b, err_n_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = self.Test_adv_network(
                     self.model, network, self.device, dataloader_test, k, n, self.d_max, self.date)
                 smoothness1 = torch.norm(torch.diff(adv_weight), p=2)
@@ -199,9 +200,9 @@ class T_offine_conv_white():
                 self.Accs_a = np.append(self.Accs_a, np.array([np.concatenate((np.array([k, n]), np.array([final_acc_a])))]),
                                    axis=0)
                 self.Adv_weights = np.append(self.Adv_weights, np.concatenate((np.array([[k, n]]), adv_weight), axis=1), axis=0)
-                self.Perdiction_a = np.append(self.Perdiction_a, np.array([np.concatenate((np.array([k]), loc_prediction_a))]),
+                self.Perdiction_a = np.append(self.Prediction_a, np.array([np.concatenate((np.array([k]), loc_prediction_a))]),
                                          axis=0)
-                self.Perdiction_b = np.append(self.Perdiction_b, np.array([np.concatenate((np.array([k]), loc_prediction_b))]),
+                self.Perdiction_b = np.append(self.Prediction_b, np.array([np.concatenate((np.array([k]), loc_prediction_b))]),
                                          axis=0)
 
         self.Errs_k_b = np.delete(self.Errs_k_b, [0], axis=0)
