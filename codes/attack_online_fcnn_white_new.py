@@ -60,7 +60,7 @@ class T_offine_fcnn_white():
     # train adversarial network
     def Train_adv_network(self,model, network, device, train_loader, k, n, dmax, date):
         target_location = torch.tensor([(n+1) / 10.0, 0.0/1.0]).to(device)
-        d_new = dmax-0.3
+        d_new = dmax-0.1
         model = model.to(device)
         network = network.to(device)
         for param_model in model.parameters():  # fix parameters of loc model
@@ -69,8 +69,8 @@ class T_offine_fcnn_white():
         myloss1 = MyLoss1().to(device)
         myloss3 = WeightLoss().to(device)
 
-        # optimizer = optim.SGD(network.parameters(), lr=0.5, momentum=0.5)
-        optimizer = optim.Adadelta(network.parameters(), lr=50.0)
+        optimizer = optim.SGD(network.parameters(), lr=0.5, momentum=0.1)
+        #optimizer = optim.Adadelta(network.parameters(), lr=10.0)
 
         for data in train_loader:
             _, pos, inputs = data
@@ -79,7 +79,7 @@ class T_offine_fcnn_white():
             alpha = 0.1
             first_loss = []
             third_loss = []
-            for Epoch in range(10000):  #
+            for Epoch in range(8000):  #
                 optimizer.zero_grad()
                 data_per, weights = network(inputs, date)  # add perturbation
                 output = model(data_per)  # location predicts
@@ -104,12 +104,12 @@ class T_offine_fcnn_white():
                 loss_temp = max(first_loss)'''
                 if loss1 <= 0.01 and loss3 <= 0.01:
                     continue
-                if loss1 <= 0.1 and loss3 >= 0.05:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
+                if loss1 <= 0.01 and loss3 >= 0.05:  # 动态改变权重。前期可将alpha=0.1，重要优化攻击精度。精度达到上限之后，逐渐增大alpha，是的gamma更加平滑
                     alpha = 200.0
-                elif loss1<=0.2 and loss3>=0.1:
+                elif loss1<=0.18 and loss3>=0.1:
                     alpha=100.0
                 else:
-                    alpha = 0.001
+                    alpha = 0.00001
                 if Epoch==6000:
                     mean_first=np.mean(first_loss)
                     std_first=np.std(first_loss)
@@ -177,6 +177,8 @@ class T_offine_fcnn_white():
             threshold_k = self.errors90_all[k] + self.d_max
             list_k = self.pairing(k, threshold_k)
             for n in list_k:
+                    #network = torch.load('../online_new/adv_fcnn_white/adv_white_fcnn_new7.4-' + '%d-' % k + '%d' % n + '.pth')
+
                 if  k==7 or k==8 or k==9:
                     network = self.Train_adv_network(self.model, self.CNN, self.device, dataloader_train, k, n, self.d_max,self.date)
                 else:
