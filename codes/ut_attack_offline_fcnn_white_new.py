@@ -55,7 +55,7 @@ class UT_offine_fcnn_white():
 
         myloss1 = MyLoss2().to(device)
         myloss2 = WeightLoss().to(device)
-        optimizer = optim.SGD(network.parameters(), lr=0.8, momentum=0.1)
+        optimizer = optim.SGD(network.parameters(), lr=4.8, momentum=0.1)
         #optimizer = optim.Adadelta(network.parameters(), lr=0.1)
         for data in train_loader:
             _, pos, inputs = data

@@ -81,7 +81,7 @@ class T_offine_conv_white():
             alpha = 0.1
             first_loss = []
             third_loss = []
-            for Epoch in range(10000):  #
+            for Epoch in range(100000):  #
 
 
                 optimizer.zero_grad()
@@ -181,7 +181,7 @@ class T_offine_conv_white():
             threshold_k = self.errors90_all[k] + self.d_max
             list_k = self.pairing(k, threshold_k)
             for n in list_k:
-                if k==2 or k==3 or k==5 or k==7:
+                if k==2 or k==3 or k==7:
                     network = torch.load('../online_new/adv_conv_white/adv_white_conv7.4tianxuan' + '%d-' % k + '%d' % n + '.pth')
                     network = self.Train_adv_network(self.model, network, self.device, dataloader_train, k, n,
                                                      self.d_max, self.date)

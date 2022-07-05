@@ -180,7 +180,9 @@ class T_offine_fcnn_white():
                     #network = torch.load('../online_new/adv_fcnn_white/adv_white_fcnn_new7.4-' + '%d-' % k + '%d' % n + '.pth')
 
                 if  k==7 or k==8 or k==9:
-                    network = self.Train_adv_network(self.model, self.CNN, self.device, dataloader_train, k, n, self.d_max,self.date)
+                    network = torch.load('../online_new/adv_fcnn_white/adv_white_fcnn_new7.4-' + '%d-' % k + '%d' % n + '.pth')
+
+                    #network = self.Train_adv_network(self.model, self.CNN, self.device, dataloader_train, k, n, self.d_max,self.date)
                 else:
                     network = torch.load('../online_new/adv_fcnn_white/adv_white_fcnn_new' + '%d-' % k + '%d' % n + '.pth')
                 _, _, err_k_b, err_k_a, err_n_b, err_n_a, final_acc_b, final_acc_a, adv_weight, loc_prediction_b, loc_prediction_a = self.Test_adv_network(
